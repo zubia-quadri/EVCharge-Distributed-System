@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package evcharge;
+
+// ─────────────────────────────────────────────
+// ChargingService — implemented by charging_service.py
+// ─────────────────────────────────────────────
+service ChargingService {
+  // Check whether a specific charger is available
+  rpc CheckChargerAvailability (ChargerRequest)       returns (AvailabilityResponse);
+
+  // Reserve a specific charger for an EV
+  rpc ReserveCharger            (ReservationRequest)  returns (ReservationResponse);
+
+  // Manually update a charger's status (e.g. mark as freed)
+  rpc UpdateChargerStatus       (StatusUpdateRequest) returns (StatusUpdateResponse);
+}
+
+// ─────────────────────────────────────────────
+// Shared: Lamport timestamp is carried in every
+// message so both services can maintain their clocks.
+// ─────────────────────────────────────────────
+
+message ChargerRequest {
+  string charger_id       = 1;   // e.g. "Charger_01"
+  int64  lamport_timestamp = 2;
+}
+
+message AvailabilityResponse {
+  string charger_id        = 1;
+  bool   available         = 2;
+  int64  lamport_timestamp = 3;
+}
+
+message ReservationRequest {
+  string charger_id        = 1;
+  string ev_id             = 2;   // e.g. "EV102"
+  int64  lamport_timestamp = 3;
+}
+
+message ReservationResponse {
+  bool   success           = 1;
+  string message           = 2;
+  int64  lamport_timestamp = 3;
+}
+
+message StatusUpdateRequest {
+  string charger_id        = 1;
+  string new_status        = 2;   // "AVAILABLE" | "OCCUPIED"
+  int64  lamport_timestamp = 3;
+}
+
+message StatusUpdateResponse {
+  bool   success           = 1;
+  string message           = 2;
+  int64  lamport_timestamp = 3;
+}

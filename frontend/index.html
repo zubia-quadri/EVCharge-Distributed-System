@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EVCharge — Smart EV Charging Management</title>
+  <meta name="description" content="EVCharge is a minimal distributed EV charging management system demonstrating gRPC communication and Lamport Logical Clocks." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Tokens ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-base:      #0b1120;
+      --bg-card:      rgba(255,255,255,0.04);
+      --bg-card-hov:  rgba(255,255,255,0.07);
+      --border:       rgba(255,255,255,0.08);
+      --accent:       #22d3ee;        /* cyan */
+      --accent-glow:  rgba(34,211,238,0.25);
+      --green:        #4ade80;
+      --green-glow:   rgba(74,222,128,0.20);
+      --red:          #f87171;
+      --red-glow:     rgba(248,113,113,0.20);
+      --text-primary: #f1f5f9;
+      --text-muted:   #94a3b8;
+      --text-dim:     #475569;
+      --radius:       14px;
+      --radius-sm:    8px;
+      --transition:   0.25s ease;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(34,211,238,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 80% 80%, rgba(74,222,128,0.05) 0%, transparent 60%);
+    }
+
+    /* ── Layout helpers ───────────────────────────────────────────────── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ── Header ───────────────────────────────────────────────────────── */
+    header {
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11,17,32,0.80);
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .logo-text strong { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); }
+    .logo-text span   { display: block; font-size: 0.7rem; color: var(--text-muted); font-weight: 400; }
+
+    .badge {
+      background: var(--accent-glow);
+      border: 1px solid rgba(34,211,238,0.3);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Main ─────────────────────────────────────────────────────────── */
+    main { padding: 2.5rem 0 4rem; }
+
+    /* ── Section titles ────────────────────────────────────────────────── */
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Charger Grid ─────────────────────────────────────────────────── */
+    .charger-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 640px) {
+      .charger-grid { grid-template-columns: 1fr; }
+    }
+
+    .charger-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.2rem 1.2rem;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+    }
+    .charger-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: var(--radius) var(--radius) 0 0;
+      transition: opacity var(--transition);
+    }
+    .charger-card.available::before { background: linear-gradient(90deg, var(--green), #86efac); }
+    .charger-card.occupied::before  { background: linear-gradient(90deg, var(--red), #fca5a5); }
+
+    .charger-card:hover {
+      transform: translateY(-3px);
+      background: var(--bg-card-hov);
+    }
+    .charger-card.available:hover { box-shadow: 0 8px 32px var(--green-glow); }
+    .charger-card.occupied:hover  { box-shadow: 0 8px 32px var(--red-glow); }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.2rem;
+    }
+    .charger-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      position: relative;
+    }
+    .status-dot::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .status-dot.available { background: var(--green); }
+    .status-dot.available::after { background: var(--green-glow); }
+    .status-dot.occupied  { background: var(--red); animation: none; }
+    .status-dot.occupied::after  { background: var(--red-glow); animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50%       { transform: scale(1.8); opacity: 0; }
+    }
+
+    .charger-icon-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      margin-bottom: 0.9rem;
+      font-size: 1.6rem;
+      transition: box-shadow var(--transition);
+    }
+    .available .charger-icon-wrap {
+      background: var(--green-glow);
+      box-shadow: 0 0 0 1px rgba(74,222,128,0.25);
+    }
+    .occupied .charger-icon-wrap {
+      background: var(--red-glow);
+      box-shadow: 0 0 0 1px rgba(248,113,113,0.25);
+    }
+
+    .charger-status-text {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .available .charger-status-text { color: var(--green); }
+    .occupied  .charger-status-text { color: var(--red); }
+
+    .charger-id-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 0.3rem;
+    }
+
+    /* ── Bottom panel: Reservation + Activity ─────────────────────────── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    @media (max-width: 680px) {
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    /* ── Form ─────────────────────────────────────────────────────────── */
+    .form-group { margin-bottom: 1rem; }
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.04em;
+    }
+    input, select {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.85rem;
+      font-size: 0.88rem;
+      color: var(--text-primary);
+      font-family: inherit;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      outline: none;
+    }
+    input::placeholder { color: var(--text-dim); }
+    input:focus, select:focus {
+      border-color: rgba(34,211,238,0.5);
+      box-shadow: 0 0 0 3px rgba(34,211,238,0.08);
+    }
+    select option { background: #1e293b; color: var(--text-primary); }
+
+    .btn {
+      width: 100%;
+      padding: 0.7rem 1.2rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.02em;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      color: #0b1120;
+      box-shadow: 0 4px 20px rgba(34,211,238,0.25);
+    }
+    .btn-primary:hover  { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(34,211,238,0.35); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      padding: 0.45rem 1rem;
+      width: auto;
+      margin-top: 0.6rem;
+    }
+    .btn-ghost:hover { background: var(--bg-card-hov); color: var(--text-primary); }
+
+    /* ── Result banner ────────────────────────────────────────────────── */
+    #result-banner {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 500;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    #result-banner.success {
+      background: var(--green-glow);
+      border: 1px solid rgba(74,222,128,0.3);
+      color: var(--green);
+    }
+    #result-banner.error {
+      background: var(--red-glow);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: var(--red);
+    }
+
+    /* ── Activity log ────────────────────────────────────────────────── */
+    #activity-log {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    #activity-log li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 0.5rem 0.6rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.025);
+      animation: fadeIn 0.3s ease;
+    }
+    #activity-log li .log-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 4px;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+    #activity-log li.log-success .log-dot { background: var(--green); }
+    #activity-log li.log-error   .log-dot { background: var(--red); }
+    #activity-log li .log-time {
+      color: var(--text-dim);
+      font-size: 0.7rem;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    /* Scrollbar */
+    #activity-log::-webkit-scrollbar { width: 4px; }
+    #activity-log::-webkit-scrollbar-track { background: transparent; }
+    #activity-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── Spinner ──────────────────────────────────────────────────────── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(11,17,32,0.4);
+      border-top-color: #0b1120;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Skeleton loader ─────────────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      height: 14px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Refresh indicator ───────────────────────────────────────────── */
+    .refresh-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+    }
+    .refresh-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2.5s infinite;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────── -->
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        <div class="logo-text">
+          <strong>EVCharge</strong>
+          <span>Smart EV Charging Management</span>
+        </div>
+      </div>
+      <div class="badge">DEMO</div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────────────────────── -->
+<main>
+  <div class="container">
+
+    <!-- Charger Status -->
+    <div class="section-label">Live Charger Status</div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+      <h1 class="section-title" style="margin-bottom:0;">Charging Stations</h1>
+      <span class="refresh-indicator">
+        <span class="refresh-dot"></span> Live
+        <button id="btn-refresh" class="btn btn-ghost" style="margin-top:0; padding:0.3rem 0.8rem;" onclick="loadSlots()">↻ Refresh</button>
+      </span>
+    </div>
+
+    <div class="charger-grid" id="charger-grid">
+      <!-- Cards injected by JS -->
+      <div class="charger-card" style="padding:2rem;">
+        <div class="skeleton" style="margin-bottom:0.6rem;"></div>
+        <div class="skeleton" style="width:60%;"></div>
+      </div>
+      <div class="charger-card" style="padding:2rem;">
+        <div class="skeleton" style="margin-bottom:0.6rem;"></div>
+        <div class="skeleton" style="width:60%;"></div>
+      </div>
+      <div class="charger-card" style="padding:2rem;">
+        <div class="skeleton" style="margin-bottom:0.6rem;"></div>
+        <div class="skeleton" style="width:60%;"></div>
+      </div>
+    </div>
+
+    <!-- Bottom panel -->
+    <div class="bottom-grid">
+
+      <!-- Reservation form -->
+      <div class="panel" id="reservation-panel">
+        <div class="section-label">Reserve a Slot</div>
+        <div class="section-title">Request Charging</div>
+
+        <div class="form-group">
+          <label for="ev-id">EV ID</label>
+          <input type="text" id="ev-id" placeholder="e.g. EV102" maxlength="20" autocomplete="off" />
+        </div>
+
+        <div class="form-group">
+          <label for="charger-select">Select Charger</label>
+          <select id="charger-select">
+            <option value="">— select a charger —</option>
+            <option value="Charger_01">Charger 01</option>
+            <option value="Charger_02">Charger 02</option>
+            <option value="Charger_03">Charger 03</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" id="btn-reserve" onclick="requestCharging()">
+          <span id="btn-label">⚡ Request Charging</span>
+        </button>
+
+        <div id="result-banner"></div>
+      </div>
+
+      <!-- Activity log -->
+      <div class="panel" id="activity-panel">
+        <div class="section-label">System Activity</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+          <div class="section-title" style="margin-bottom:0;">Recent Actions</div>
+          <button class="btn btn-ghost" style="margin-top:0; font-size:0.7rem; padding:0.3rem 0.75rem;" onclick="clearLog()">Clear</button>
+        </div>
+        <ul id="activity-log"></ul>
+      </div>
+
+    </div><!-- /bottom-grid -->
+
+  </div><!-- /container -->
+</main>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────
+  let slots = [];   // latest charger data from /slots
+
+  // ── Log helpers ────────────────────────────────────────────────────────
+  function now() {
+    return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function addLog(text, type = 'info') {
+    const ul = document.getElementById('activity-log');
+    const li = document.createElement('li');
+    if (type === 'success') li.className = 'log-success';
+    if (type === 'error')   li.className = 'log-error';
+    li.innerHTML = `<span class="log-dot"></span><span>${text}</span><span class="log-time">${now()}</span>`;
+    ul.prepend(li);
+    // Cap at 30 entries
+    while (ul.children.length > 30) ul.removeChild(ul.lastChild);
+  }
+
+  function clearLog() {
+    document.getElementById('activity-log').innerHTML = '';
+  }
+
+  // ── Load charger slots ─────────────────────────────────────────────────
+  async function loadSlots() {
+    addLog('Fetching charger status via gRPC...');
+    try {
+      const resp = await fetch('/slots');
+      if (!resp.ok) throw new Error('Network error');
+      slots = await resp.json();
+      renderCards(slots);
+      updateChargerSelect(slots);
+      addLog('Charger status loaded.', 'success');
+    } catch (e) {
+      addLog('Failed to reach Reservation Service.', 'error');
+      console.error(e);
+    }
+  }
+
+  // ── Render charger cards ───────────────────────────────────────────────
+  function renderCards(data) {
+    const grid = document.getElementById('charger-grid');
+    grid.innerHTML = '';
+    const icons = { available: '✅', occupied: '🔌' };
+    data.forEach(c => {
+      const cls = c.available ? 'available' : 'occupied';
+      const label = c.status.charAt(0) + c.status.slice(1).toLowerCase();
+      const displayName = c.id.replace('_', ' ');
+      grid.innerHTML += `
+        <div class="charger-card ${cls}" id="card-${c.id}">
+          <div class="card-top">
+            <span class="charger-name">${displayName}</span>
+            <span class="status-dot ${cls}"></span>
+          </div>
+          <div class="charger-icon-wrap">${icons[cls]}</div>
+          <div class="charger-status-text">${label}</div>
+          <div class="charger-id-label">${c.id.replace('_', '-')}</div>
+        </div>`;
+    });
+  }
+
+  // ── Keep charger select in sync ────────────────────────────────────────
+  function updateChargerSelect(data) {
+    const sel = document.getElementById('charger-select');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— select a charger —</option>';
+    data.forEach(c => {
+      const displayName = c.id.replace('_', ' ');
+      const tag = c.available ? '' : ' (Occupied)';
+      sel.innerHTML += `<option value="${c.id}" ${!c.available ? 'disabled' : ''}>${displayName}${tag}</option>`;
+    });
+    // Restore selection if still valid
+    if (current) sel.value = current;
+  }
+
+  // ── Request charging ───────────────────────────────────────────────────
+  async function requestCharging() {
+    const evId      = document.getElementById('ev-id').value.trim();
+    const chargerId = document.getElementById('charger-select').value;
+    const btn       = document.getElementById('btn-reserve');
+    const btnLabel  = document.getElementById('btn-label');
+    const banner    = document.getElementById('result-banner');
+
+    // Validate
+    if (!evId) {
+      showBanner('Please enter an EV ID.', false);
+      return;
+    }
+    if (!chargerId) {
+      showBanner('Please select a charger.', false);
+      return;
+    }
+
+    // Loading state
+    btn.disabled = true;
+    btnLabel.innerHTML = '<span class="spinner"></span> Communicating...';
+    banner.style.display = 'none';
+
+    addLog(`${evId} requested ${chargerId.replace('_',' ')}`);
+    addLog('Checking charger availability via gRPC...');
+
+    try {
+      const resp = await fetch('/reserve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ev_id: evId, charger_id: chargerId }),
+      });
+      const data = await resp.json();
+
+      // Add activity from server
+      if (data.activity) {
+        data.activity.forEach((msg, i) => {
+          if (i > 0) addLog(msg, data.success && i === data.activity.length - 1 ? 'success' : 'info');
+        });
+      }
+
+      if (data.success) {
+        showBanner('✓ ' + data.message, true);
+        addLog('Reservation complete — refreshing slots...', 'success');
+        await loadSlots();
+      } else {
+        showBanner('✗ ' + data.message, false);
+        addLog('Reservation failed.', 'error');
+      }
+    } catch (e) {
+      showBanner('Connection error — is the backend running?', false);
+      addLog('Connection error.', 'error');
+      console.error(e);
+    } finally {
+      btn.disabled = false;
+      btnLabel.innerHTML = '⚡ Request Charging';
+    }
+  }
+
+  function showBanner(msg, success) {
+    const b = document.getElementById('result-banner');
+    b.textContent = msg;
+    b.className   = success ? 'success' : 'error';
+    b.style.display = 'block';
+  }
+
+  // ── Enter key to submit ────────────────────────────────────────────────
+  document.getElementById('ev-id').addEventListener('keydown', e => {
+    if (e.key === 'Enter') requestCharging();
+  });
+
+  // ── Init ───────────────────────────────────────────────────────────────
+  addLog('EVCharge UI initialised');
+  addLog('Connecting to Reservation Service...');
+  loadSlots();
+</script>
+
+</body>
+</html>
