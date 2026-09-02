@@ -55,3 +55,35 @@ message StatusUpdateResponse {
   string message           = 2;
   int64  lamport_timestamp = 3;
 }
+
+// Experiment 4: Peer-to-peer distributed mutual exclusion
+service MutexService {
+  rpc RequestAccess (AccessRequest) returns (AccessReply);
+}
+
+message AccessRequest {
+  int32 node_id = 1;
+  int32 timestamp = 2;
+}
+
+message AccessReply {
+  int32 node_id = 1;
+  int32 timestamp = 2;
+}
+
+// Experiment 5: Deadlock simulation and resolution
+service LockService {
+  rpc AcquireLock (LockRequest) returns (LockReply);
+  rpc ReleaseLock (LockRequest) returns (LockReply);
+}
+
+message LockRequest {
+  string resource_id = 1;
+  int32 holder_id = 2;
+  int32 timestamp = 3;
+}
+
+message LockReply {
+  bool granted = 1;
+  string message = 2;
+}
