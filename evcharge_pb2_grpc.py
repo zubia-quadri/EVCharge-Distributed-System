@@ -386,3 +386,245 @@ class LockService:
             timeout,
             metadata,
             _registered_method=True)
+
+
+class EVWorkerServiceStub:
+    """Experiment 6 - Least Connections Load Balancing
+
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.HandleRequest = channel.unary_unary(
+                '/evcharge.EVWorkerService/HandleRequest',
+                request_serializer=evcharge__pb2.LoadRequest.SerializeToString,
+                response_deserializer=evcharge__pb2.LoadReply.FromString,
+                _registered_method=True)
+
+
+class EVWorkerServiceServicer:
+    """Experiment 6 - Least Connections Load Balancing
+
+    """
+
+    def HandleRequest(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_EVWorkerServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'HandleRequest': grpc.unary_unary_rpc_method_handler(
+                    servicer.HandleRequest,
+                    request_deserializer=evcharge__pb2.LoadRequest.FromString,
+                    response_serializer=evcharge__pb2.LoadReply.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'evcharge.EVWorkerService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('evcharge.EVWorkerService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class EVWorkerService:
+    """Experiment 6 - Least Connections Load Balancing
+
+    """
+
+    @staticmethod
+    def HandleRequest(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/evcharge.EVWorkerService/HandleRequest',
+            evcharge__pb2.LoadRequest.SerializeToString,
+            evcharge__pb2.LoadReply.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class ReplicaServiceStub:
+    """Experiment 7 - Eventual Consistency using Gossip Replication + LWW
+
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.SaveValue = channel.unary_unary(
+                '/evcharge.ReplicaService/SaveValue',
+                request_serializer=evcharge__pb2.ValueUpdate.SerializeToString,
+                response_deserializer=evcharge__pb2.SaveAck.FromString,
+                _registered_method=True)
+        self.SyncUpdate = channel.unary_unary(
+                '/evcharge.ReplicaService/SyncUpdate',
+                request_serializer=evcharge__pb2.ValueUpdate.SerializeToString,
+                response_deserializer=evcharge__pb2.SaveAck.FromString,
+                _registered_method=True)
+        self.GetValue = channel.unary_unary(
+                '/evcharge.ReplicaService/GetValue',
+                request_serializer=evcharge__pb2.ValueQuery.SerializeToString,
+                response_deserializer=evcharge__pb2.ValueState.FromString,
+                _registered_method=True)
+
+
+class ReplicaServiceServicer:
+    """Experiment 7 - Eventual Consistency using Gossip Replication + LWW
+
+    """
+
+    def SaveValue(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SyncUpdate(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetValue(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_ReplicaServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'SaveValue': grpc.unary_unary_rpc_method_handler(
+                    servicer.SaveValue,
+                    request_deserializer=evcharge__pb2.ValueUpdate.FromString,
+                    response_serializer=evcharge__pb2.SaveAck.SerializeToString,
+            ),
+            'SyncUpdate': grpc.unary_unary_rpc_method_handler(
+                    servicer.SyncUpdate,
+                    request_deserializer=evcharge__pb2.ValueUpdate.FromString,
+                    response_serializer=evcharge__pb2.SaveAck.SerializeToString,
+            ),
+            'GetValue': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetValue,
+                    request_deserializer=evcharge__pb2.ValueQuery.FromString,
+                    response_serializer=evcharge__pb2.ValueState.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'evcharge.ReplicaService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('evcharge.ReplicaService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class ReplicaService:
+    """Experiment 7 - Eventual Consistency using Gossip Replication + LWW
+
+    """
+
+    @staticmethod
+    def SaveValue(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/evcharge.ReplicaService/SaveValue',
+            evcharge__pb2.ValueUpdate.SerializeToString,
+            evcharge__pb2.SaveAck.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SyncUpdate(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/evcharge.ReplicaService/SyncUpdate',
+            evcharge__pb2.ValueUpdate.SerializeToString,
+            evcharge__pb2.SaveAck.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetValue(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/evcharge.ReplicaService/GetValue',
+            evcharge__pb2.ValueQuery.SerializeToString,
+            evcharge__pb2.ValueState.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)

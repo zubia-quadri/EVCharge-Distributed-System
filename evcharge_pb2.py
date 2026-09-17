@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0e\x65vcharge.proto\x12\x08\x65vcharge\"?\n\x0e\x43hargerRequest\x12\x12\n\ncharger_id\x18\x01 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x02 \x01(\x03\"X\n\x14\x41vailabilityResponse\x12\x12\n\ncharger_id\x18\x01 \x01(\t\x12\x11\n\tavailable\x18\x02 \x01(\x08\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x03\"R\n\x12ReservationRequest\x12\x12\n\ncharger_id\x18\x01 \x01(\t\x12\r\n\x05\x65v_id\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x03\"R\n\x13ReservationResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x03\"X\n\x13StatusUpdateRequest\x12\x12\n\ncharger_id\x18\x01 \x01(\t\x12\x12\n\nnew_status\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x03\"S\n\x14StatusUpdateResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x03\"3\n\rAccessRequest\x12\x0f\n\x07node_id\x18\x01 \x01(\x05\x12\x11\n\ttimestamp\x18\x02 \x01(\x05\"1\n\x0b\x41\x63\x63\x65ssReply\x12\x0f\n\x07node_id\x18\x01 \x01(\x05\x12\x11\n\ttimestamp\x18\x02 \x01(\x05\"H\n\x0bLockRequest\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x11\n\tholder_id\x18\x02 \x01(\x05\x12\x11\n\ttimestamp\x18\x03 \x01(\x05\"-\n\tLockReply\x12\x0f\n\x07granted\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t2\x8c\x02\n\x0f\x43hargingService\x12T\n\x18\x43heckChargerAvailability\x12\x18.evcharge.ChargerRequest\x1a\x1e.evcharge.AvailabilityResponse\x12M\n\x0eReserveCharger\x12\x1c.evcharge.ReservationRequest\x1a\x1d.evcharge.ReservationResponse\x12T\n\x13UpdateChargerStatus\x12\x1d.evcharge.StatusUpdateRequest\x1a\x1e.evcharge.StatusUpdateResponse2O\n\x0cMutexService\x12?\n\rRequestAccess\x12\x17.evcharge.AccessRequest\x1a\x15.evcharge.AccessReply2\x83\x01\n\x0bLockService\x12\x39\n\x0b\x41\x63quireLock\x12\x15.evcharge.LockRequest\x1a\x13.evcharge.LockReply\x12\x39\n\x0bReleaseLock\x12\x15.evcharge.LockRequest\x1a\x13.evcharge.LockReplyb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0e\x65vcharge.proto\x12\x08\x65vcharge\"?\n\x0e\x43hargerRequest\x12\x12\n\ncharger_id\x18\x01 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x02 \x01(\x03\"X\n\x14\x41vailabilityResponse\x12\x12\n\ncharger_id\x18\x01 \x01(\t\x12\x11\n\tavailable\x18\x02 \x01(\x08\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x03\"R\n\x12ReservationRequest\x12\x12\n\ncharger_id\x18\x01 \x01(\t\x12\r\n\x05\x65v_id\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x03\"R\n\x13ReservationResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x03\"X\n\x13StatusUpdateRequest\x12\x12\n\ncharger_id\x18\x01 \x01(\t\x12\x12\n\nnew_status\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x03\"S\n\x14StatusUpdateResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x03\"3\n\rAccessRequest\x12\x0f\n\x07node_id\x18\x01 \x01(\x05\x12\x11\n\ttimestamp\x18\x02 \x01(\x05\"1\n\x0b\x41\x63\x63\x65ssReply\x12\x0f\n\x07node_id\x18\x01 \x01(\x05\x12\x11\n\ttimestamp\x18\x02 \x01(\x05\"H\n\x0bLockRequest\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x11\n\tholder_id\x18\x02 \x01(\x05\x12\x11\n\ttimestamp\x18\x03 \x01(\x05\"-\n\tLockReply\x12\x0f\n\x07granted\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"!\n\x0bLoadRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\"C\n\tLoadReply\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\x12\x12\n\nhandled_by\x18\x02 \x01(\t\x12\x0e\n\x06status\x18\x03 \x01(\t\"^\n\x0bValueUpdate\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x05\x12\x16\n\x0eorigin_replica\x18\x04 \x01(\t\"G\n\x07SaveAck\x12\x10\n\x08\x61\x63\x63\x65pted\x18\x01 \x01(\x08\x12\x0f\n\x07replica\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x05\"\x19\n\nValueQuery\x12\x0b\n\x03key\x18\x01 \x01(\t\"]\n\nValueState\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12\x19\n\x11lamport_timestamp\x18\x03 \x01(\x05\x12\x16\n\x0eorigin_replica\x18\x04 \x01(\t2\x8c\x02\n\x0f\x43hargingService\x12T\n\x18\x43heckChargerAvailability\x12\x18.evcharge.ChargerRequest\x1a\x1e.evcharge.AvailabilityResponse\x12M\n\x0eReserveCharger\x12\x1c.evcharge.ReservationRequest\x1a\x1d.evcharge.ReservationResponse\x12T\n\x13UpdateChargerStatus\x12\x1d.evcharge.StatusUpdateRequest\x1a\x1e.evcharge.StatusUpdateResponse2O\n\x0cMutexService\x12?\n\rRequestAccess\x12\x17.evcharge.AccessRequest\x1a\x15.evcharge.AccessReply2\x83\x01\n\x0bLockService\x12\x39\n\x0b\x41\x63quireLock\x12\x15.evcharge.LockRequest\x1a\x13.evcharge.LockReply\x12\x39\n\x0bReleaseLock\x12\x15.evcharge.LockRequest\x1a\x13.evcharge.LockReply2N\n\x0f\x45VWorkerService\x12;\n\rHandleRequest\x12\x15.evcharge.LoadRequest\x1a\x13.evcharge.LoadReply2\xb7\x01\n\x0eReplicaService\x12\x35\n\tSaveValue\x12\x15.evcharge.ValueUpdate\x1a\x11.evcharge.SaveAck\x12\x36\n\nSyncUpdate\x12\x15.evcharge.ValueUpdate\x1a\x11.evcharge.SaveAck\x12\x36\n\x08GetValue\x12\x14.evcharge.ValueQuery\x1a\x14.evcharge.ValueStateb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -51,10 +51,26 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_LOCKREQUEST']._serialized_end=702
   _globals['_LOCKREPLY']._serialized_start=704
   _globals['_LOCKREPLY']._serialized_end=749
-  _globals['_CHARGINGSERVICE']._serialized_start=752
-  _globals['_CHARGINGSERVICE']._serialized_end=1020
-  _globals['_MUTEXSERVICE']._serialized_start=1022
-  _globals['_MUTEXSERVICE']._serialized_end=1101
-  _globals['_LOCKSERVICE']._serialized_start=1104
-  _globals['_LOCKSERVICE']._serialized_end=1235
+  _globals['_LOADREQUEST']._serialized_start=751
+  _globals['_LOADREQUEST']._serialized_end=784
+  _globals['_LOADREPLY']._serialized_start=786
+  _globals['_LOADREPLY']._serialized_end=853
+  _globals['_VALUEUPDATE']._serialized_start=855
+  _globals['_VALUEUPDATE']._serialized_end=949
+  _globals['_SAVEACK']._serialized_start=951
+  _globals['_SAVEACK']._serialized_end=1022
+  _globals['_VALUEQUERY']._serialized_start=1024
+  _globals['_VALUEQUERY']._serialized_end=1049
+  _globals['_VALUESTATE']._serialized_start=1051
+  _globals['_VALUESTATE']._serialized_end=1144
+  _globals['_CHARGINGSERVICE']._serialized_start=1147
+  _globals['_CHARGINGSERVICE']._serialized_end=1415
+  _globals['_MUTEXSERVICE']._serialized_start=1417
+  _globals['_MUTEXSERVICE']._serialized_end=1496
+  _globals['_LOCKSERVICE']._serialized_start=1499
+  _globals['_LOCKSERVICE']._serialized_end=1630
+  _globals['_EVWORKERSERVICE']._serialized_start=1632
+  _globals['_EVWORKERSERVICE']._serialized_end=1710
+  _globals['_REPLICASERVICE']._serialized_start=1713
+  _globals['_REPLICASERVICE']._serialized_end=1896
 # @@protoc_insertion_point(module_scope)
