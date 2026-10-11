@@ -1,0 +1,134 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-a
+  template:
+    metadata:
+      labels:
+        app: service-a
+    spec:
+      containers:
+      - name: service-a
+        image: myapp-backend:latest
+        imagePullPolicy: Never
+        command: ["python", "-u", "peer_node.py", "A"]
+        ports:
+        - containerPort: 60401
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-a
+spec:
+  selector:
+    app: service-a
+  ports:
+  - port: 60401
+    targetPort: 60401
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-b
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-b
+  template:
+    metadata:
+      labels:
+        app: service-b
+    spec:
+      containers:
+      - name: service-b
+        image: myapp-backend:latest
+        imagePullPolicy: Never
+        command: ["python", "-u", "peer_node.py", "B"]
+        ports:
+        - containerPort: 60402
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-b
+spec:
+  selector:
+    app: service-b
+  ports:
+  - port: 60402
+    targetPort: 60402
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-c
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-c
+  template:
+    metadata:
+      labels:
+        app: service-c
+    spec:
+      containers:
+      - name: service-c
+        image: myapp-backend:latest
+        imagePullPolicy: Never
+        command: ["python", "-u", "peer_node.py", "C"]
+        ports:
+        - containerPort: 60403
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-c
+spec:
+  selector:
+    app: service-c
+  ports:
+  - port: 60403
+    targetPort: 60403
+---
+# Replicated Worker Deployment with 5 replicas (> 3 replicas as required)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: worker
+        image: myapp-backend:latest
+        imagePullPolicy: Never
+        command: ["python", "-u", "backend/load_worker.py", "60201"]
+        ports:
+        - containerPort: 60201
+---
+# Headless Service for worker to allow gRPC client-side round-robin DNS load balancing
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker
+spec:
+  clusterIP: None
+  selector:
+    app: worker
+  ports:
+  - port: 60201
+    targetPort: 60201

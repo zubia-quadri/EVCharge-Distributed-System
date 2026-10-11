@@ -20,20 +20,22 @@ class EVWorkerServicer(evcharge_pb2_grpc.EVWorkerServiceServicer):
         self.name = name
 
     def HandleRequest(self, request, context):
-        # Simulate different EV charging request processing times
-        work_time = random.uniform(1.0, 3.0)
+        # Simulate EV charging request processing times
+        work_time = random.uniform(0.1, 0.4)
 
         print(
-            f"[{self.name}] Handling EVCharge request "
+            f"[{self.name}] Handling request "
             f"{request.request_id} "
-            f"(will take {work_time:.1f}s)"
+            f"(will take {work_time:.2f}s)",
+            flush=True
         )
 
         time.sleep(work_time)
 
         print(
             f"[{self.name}] Finished EVCharge request "
-            f"{request.request_id}"
+            f"{request.request_id}",
+            flush=True
         )
 
         return evcharge_pb2.LoadReply(
@@ -43,8 +45,9 @@ class EVWorkerServicer(evcharge_pb2_grpc.EVWorkerServiceServicer):
         )
 
 
-def serve(port):
-    name = f"EVWorker-{port}"
+def serve(port=60201):
+    pod_id = os.environ.get("HOSTNAME", f"port-{port}")
+    name = f"EVWorker-{pod_id}"
 
     server = grpc.server(
         futures.ThreadPoolExecutor(max_workers=20)
@@ -55,10 +58,10 @@ def serve(port):
         server
     )
 
-    server.add_insecure_port(f"localhost:{port}")
+    server.add_insecure_port(f"0.0.0.0:{port}")
     server.start()
 
-    print(f"{name} listening on localhost:{port}")
+    print(f"[{name}] listening on 0.0.0.0:{port}", flush=True)
 
     try:
         while True:
@@ -68,4 +71,5 @@ def serve(port):
 
 
 if __name__ == "__main__":
-    serve(int(sys.argv[1]))
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("WORKER_PORT", 60201))
+    serve(port)

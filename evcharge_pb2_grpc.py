@@ -5,7 +5,7 @@ import warnings
 
 import evcharge_pb2 as evcharge__pb2
 
-GRPC_GENERATED_VERSION = '1.83.0'
+GRPC_GENERATED_VERSION = '1.75.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -18,14 +18,14 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in evcharge_pb2_grpc.py depends on'
+        + f' but the generated code in evcharge_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
     )
 
 
-class ChargingServiceStub:
+class ChargingServiceStub(object):
     """─────────────────────────────────────────────
     ChargingService — implemented by charging_service.py
     ─────────────────────────────────────────────
@@ -54,7 +54,7 @@ class ChargingServiceStub:
                 _registered_method=True)
 
 
-class ChargingServiceServicer:
+class ChargingServiceServicer(object):
     """─────────────────────────────────────────────
     ChargingService — implemented by charging_service.py
     ─────────────────────────────────────────────
@@ -107,7 +107,7 @@ def add_ChargingServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class ChargingService:
+class ChargingService(object):
     """─────────────────────────────────────────────
     ChargingService — implemented by charging_service.py
     ─────────────────────────────────────────────
@@ -195,7 +195,7 @@ class ChargingService:
             _registered_method=True)
 
 
-class MutexServiceStub:
+class MutexServiceStub(object):
     """Experiment 4: Peer-to-peer distributed mutual exclusion
     """
 
@@ -212,7 +212,7 @@ class MutexServiceStub:
                 _registered_method=True)
 
 
-class MutexServiceServicer:
+class MutexServiceServicer(object):
     """Experiment 4: Peer-to-peer distributed mutual exclusion
     """
 
@@ -238,7 +238,7 @@ def add_MutexServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class MutexService:
+class MutexService(object):
     """Experiment 4: Peer-to-peer distributed mutual exclusion
     """
 
@@ -270,7 +270,7 @@ class MutexService:
             _registered_method=True)
 
 
-class LockServiceStub:
+class LockServiceStub(object):
     """Experiment 5: Deadlock simulation and resolution
     """
 
@@ -292,7 +292,7 @@ class LockServiceStub:
                 _registered_method=True)
 
 
-class LockServiceServicer:
+class LockServiceServicer(object):
     """Experiment 5: Deadlock simulation and resolution
     """
 
@@ -329,7 +329,7 @@ def add_LockServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class LockService:
+class LockService(object):
     """Experiment 5: Deadlock simulation and resolution
     """
 
@@ -388,7 +388,7 @@ class LockService:
             _registered_method=True)
 
 
-class EVWorkerServiceStub:
+class EVWorkerServiceStub(object):
     """Experiment 6 - Least Connections Load Balancing
 
     """
@@ -406,7 +406,7 @@ class EVWorkerServiceStub:
                 _registered_method=True)
 
 
-class EVWorkerServiceServicer:
+class EVWorkerServiceServicer(object):
     """Experiment 6 - Least Connections Load Balancing
 
     """
@@ -433,7 +433,7 @@ def add_EVWorkerServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class EVWorkerService:
+class EVWorkerService(object):
     """Experiment 6 - Least Connections Load Balancing
 
     """
@@ -466,7 +466,7 @@ class EVWorkerService:
             _registered_method=True)
 
 
-class ReplicaServiceStub:
+class ReplicaServiceStub(object):
     """Experiment 7 - Eventual Consistency using Gossip Replication + LWW
 
     """
@@ -494,7 +494,7 @@ class ReplicaServiceStub:
                 _registered_method=True)
 
 
-class ReplicaServiceServicer:
+class ReplicaServiceServicer(object):
     """Experiment 7 - Eventual Consistency using Gossip Replication + LWW
 
     """
@@ -543,7 +543,7 @@ def add_ReplicaServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class ReplicaService:
+class ReplicaService(object):
     """Experiment 7 - Eventual Consistency using Gossip Replication + LWW
 
     """

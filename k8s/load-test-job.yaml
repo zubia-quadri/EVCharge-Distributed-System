@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: load-test
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: load-test
+        image: myapp-backend:latest
+        imagePullPolicy: Never
+        command: ["python", "-u", "load_test.py"]
+        env:
+        - name: TARGET_ADDR
+          value: "worker:60201"
+        - name: NUM_REQUESTS
+          value: "25"
+        - name: CONCURRENCY
+          value: "5"
