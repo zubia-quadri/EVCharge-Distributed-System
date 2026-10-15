@@ -256,3 +256,62 @@ This gives every event in the distributed system a **logical timestamp**, enabli
 - **Protocol Buffers**: Efficient binary serialization of messages
 - **Lamport Logical Clocks**: Causal ordering of events in a distributed system
 - **Client-Server Pattern**: Reservation Service (client) ↔ Charging Service (server)
+
+---
+
+## Experiment 11: Distributed File System (DFS)
+
+Experiment 11 demonstrates a fault-tolerant distributed file system with 1 Metadata Server, 3 Storage Nodes, 64 KB chunking, replication factor 2, SHA-256 integrity verification, and Lamport logical clock file versioning.
+
+### Running DFS Services (Stage 2)
+
+Open **four separate terminals**, all with the virtual environment activated:
+
+#### Terminal 1 — Start the DFS Metadata Server
+```powershell
+.\venv\Scripts\python.exe backend\dfs_metadata.py
+```
+*Listens on `localhost:60501` (bound to `0.0.0.0:60501`).*
+
+#### Terminal 2 — Start Storage Node 1 (`store-1`)
+```powershell
+.\venv\Scripts\python.exe backend\dfs_storage.py 1
+```
+*Listens on `localhost:60511`, stores chunks in `dfs_data\store-1\`.*
+
+#### Terminal 3 — Start Storage Node 2 (`store-2`)
+```powershell
+.\venv\Scripts\python.exe backend\dfs_storage.py 2
+```
+*Listens on `localhost:60512`, stores chunks in `dfs_data\store-2\`.*
+
+#### Terminal 4 — Start Storage Node 3 (`store-3`)
+```powershell
+.\venv\Scripts\python.exe backend\dfs_storage.py 3
+```
+*Listens on `localhost:60513`, stores chunks in `dfs_data\store-3\`.*
+
+### Running DFS Client Commands (Stage 3)
+
+In a **fifth terminal** (or any new terminal):
+
+```powershell
+# 1. Query cluster health, live nodes, and stored files
+.\venv\Scripts\python.exe backend\dfs_client.py status
+
+# 2. Upload a file (splits into 64 KB chunks, replicates x2, verifies SHA-256)
+.\venv\Scripts\python.exe backend\dfs_client.py put test_sample.txt
+
+# 3. Download and reassemble a file with checksum verification
+.\venv\Scripts\python.exe backend\dfs_client.py get test_sample.txt downloaded_sample.txt
+
+# 4. Run automated self-healing repair after node failures
+.\venv\Scripts\python.exe backend\dfs_repair.py
+```
+
+### Automated Experiment 11 Test Runner
+To run the complete automated test suite (upload, download, node kill failover, 6s heartbeat detection, repair re-replication, chunk corruption fallback, and node rejoin):
+```powershell
+.\venv\Scripts\python.exe test_exp11_complete_runner.py
+```
+

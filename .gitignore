@@ -4,3 +4,10 @@ __pycache__/
 .env
 .vscode/
 .idea/
+dfs_data/
+.dfs_client_clock
+*.bin
+downloaded_*.txt
+empty_test.txt
+test_sample.txt
+dfs_test.txt

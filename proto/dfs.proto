@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package dfs_demo;
+
+// Distributed file system: a metadata server plus storage nodes.
+// A metadata server tracks which storage nodes hold which chunks of each
+// file. Storage nodes keep the actual chunk bytes on disk and send
+// heartbeats so the metadata server knows who is alive. Every file gets a
+// version taken from the Lamport clock (same clock rules as Experiment 3).
+service DfsMetadataService {
+  rpc Heartbeat (DfsNodeInfo) returns (DfsAck);
+  rpc AllocateFile (DfsAllocateRequest) returns (DfsAllocateReply);
+  rpc CommitFile (DfsCommitRequest) returns (DfsCommitReply);
+  rpc GetFileInfo (DfsFileQuery) returns (DfsFileInfo);
+  rpc ClusterStatus (DfsStatusRequest) returns (DfsStatusReply);
+  rpc AddReplica (DfsReplicaUpdate) returns (DfsAck);
+}
+
+service DfsStorageService {
+  rpc PutChunk (DfsChunkData) returns (DfsAck);
+  rpc GetChunk (DfsChunkId) returns (DfsChunkData);
+}
+
+message DfsNodeInfo {
+  string node_id = 1;
+  string address = 2;
+}
+
+message DfsAck {
+  bool ok = 1;
+  string message = 2;
+}
+
+message DfsChunkPlan {
+  int32 index = 1;
+  string chunk_id = 2;
+  repeated string node_ids = 3;
+  repeated string addresses = 4;
+  repeated bool alive = 5;
+  string sha256 = 6;
+}
+
+message DfsAllocateRequest {
+  string filename = 1;
+  int32 num_chunks = 2;
+  int32 lamport_timestamp = 3;
+}
+
+message DfsAllocateReply {
+  bool ok = 1;
+  string message = 2;
+  int32 version = 3;
+  repeated DfsChunkPlan plan = 4;
+  int32 lamport_timestamp = 5;
+}
+
+message DfsCommitRequest {
+  string filename = 1;
+  int32 version = 2;
+  int64 size = 3;
+  string sha256 = 4;
+  repeated DfsChunkPlan chunks = 5;
+}
+
+message DfsCommitReply {
+  bool ok = 1;
+  string message = 2;
+  int32 lamport_timestamp = 3;
+}
+
+message DfsFileQuery {
+  string filename = 1;
+}
+
+message DfsFileInfo {
+  bool found = 1;
+  string filename = 2;
+  int32 version = 3;
+  int64 size = 4;
+  string sha256 = 5;
+  repeated DfsChunkPlan chunks = 6;
+}
+
+message DfsChunkData {
+  string chunk_id = 1;
+  bytes data = 2;
+  string sha256 = 3;
+}
+
+message DfsChunkId {
+  string chunk_id = 1;
+}
+
+message DfsStatusRequest {}
+
+message DfsNodeStatus {
+  string node_id = 1;
+  string address = 2;
+  bool alive = 3;
+  int32 chunk_count = 4;
+}
+
+message DfsStatusReply {
+  repeated DfsNodeStatus nodes = 1;
+  repeated DfsFileInfo files = 2;
+}
+
+message DfsReplicaUpdate {
+  string filename = 1;
+  int32 chunk_index = 2;
+  string node_id = 3;
+}
