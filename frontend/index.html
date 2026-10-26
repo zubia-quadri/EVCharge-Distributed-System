@@ -3,652 +3,1465 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EVCharge — Smart EV Charging Management</title>
-  <meta name="description" content="EVCharge is a minimal distributed EV charging management system demonstrating gRPC communication and Lamport Logical Clocks." />
+  <title>Storm EV — Smart Electric Vehicle Charging Network</title>
+  <meta name="description" content="Next-generation intelligent fast charging network for electric vehicles. Instant booking, real-time power telemetry, and automated cloud grid reliability." />
+
+  <!-- Google Fonts: Space Grotesk, Plus Jakarta Sans, Space Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
   <style>
-    /* ── Reset & Tokens ───────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── Storm EV Ultra-Glassmorphism & 3D Tokens ──────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     :root {
-      --bg-base:      #0b1120;
-      --bg-card:      rgba(255,255,255,0.04);
-      --bg-card-hov:  rgba(255,255,255,0.07);
-      --border:       rgba(255,255,255,0.08);
-      --accent:       #22d3ee;        /* cyan */
-      --accent-glow:  rgba(34,211,238,0.25);
-      --green:        #4ade80;
-      --green-glow:   rgba(74,222,128,0.20);
-      --red:          #f87171;
-      --red-glow:     rgba(248,113,113,0.20);
-      --text-primary: #f1f5f9;
-      --text-muted:   #94a3b8;
-      --text-dim:     #475569;
-      --radius:       14px;
-      --radius-sm:    8px;
-      --transition:   0.25s ease;
-    }
+      --bg-dark: #070a12;
+      --bg-surface: #0f172a;
 
-    html { scroll-behavior: smooth; }
+      /* High-End Multi-Layered Frosted Glass */
+      --glass-base: rgba(15, 23, 42, 0.65);
+      --glass-surface: rgba(30, 41, 59, 0.55);
+      --glass-hover: rgba(51, 65, 85, 0.6);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-border-highlight: rgba(255, 255, 255, 0.22);
+
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
+      /* Electric Storm Accents */
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.45);
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.4);
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --purple: #8b5cf6;
+
+      --font-display: 'Space Grotesk', -apple-system, sans-serif;
+      --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-mono: 'Space Mono', monospace;
+
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-pill: 9999px;
+
+      --shadow-glass: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      --shadow-glass-hover: 0 30px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(16, 185, 129, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    }
 
     body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg-base);
-      color: var(--text-primary);
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
       min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
       background-image:
-        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(34,211,238,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 30% at 80% 80%, rgba(74,222,128,0.05) 0%, transparent 60%);
+        radial-gradient(circle at 18% 12%, rgba(16, 185, 129, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 82% 28%, rgba(6, 182, 212, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 60%);
+      background-attachment: fixed;
     }
 
-    /* ── Layout helpers ───────────────────────────────────────────────── */
-    .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+    h1, h2, h3, .heading-display {
+      font-family: var(--font-display);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    .mono {
+      font-family: var(--font-mono);
+    }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
 
-    /* ── Header ───────────────────────────────────────────────────────── */
-    header {
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      position: sticky;
-      top: 0;
+    /* ── Ambient Background Animated Light Orbs ───────────────────── */
+    .ambient-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+      animation: orbFloat 18s infinite ease-in-out alternate;
+    }
+    .orb-1 {
+      width: 450px;
+      height: 450px;
+      top: 5%;
+      left: 10%;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+    }
+    .orb-2 {
+      width: 500px;
+      height: 500px;
+      top: 30%;
+      right: 5%;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.18) 0%, transparent 70%);
+      animation-delay: -9s;
+    }
+    @keyframes orbFloat {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(40px) scale(1.08); }
+    }
+
+    /* ── Floating Header Navbar (Glassmorphic Pill) ─────────────────── */
+    .nav-container {
+      position: fixed;
+      top: 1.25rem;
+      left: 0;
+      right: 0;
       z-index: 100;
-      background: rgba(11,17,32,0.80);
+      display: flex;
+      justify-content: center;
+      padding: 0 1.5rem;
     }
-    .header-inner {
+    .navbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 64px;
+      width: 100%;
+      max-width: 1180px;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      padding: 0.65rem 1.4rem;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      transition: all 0.3s ease;
     }
-    .logo {
+    .navbar:hover {
+      border-color: var(--glass-border-highlight);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    }
+    .brand {
       display: flex;
       align-items: center;
       gap: 10px;
-    }
-    .logo-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, var(--accent), #818cf8);
-      border-radius: 9px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      box-shadow: 0 0 16px var(--accent-glow);
-    }
-    .logo-text strong { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); }
-    .logo-text span   { display: block; font-size: 0.7rem; color: var(--text-muted); font-weight: 400; }
-
-    .badge {
-      background: var(--accent-glow);
-      border: 1px solid rgba(34,211,238,0.3);
-      color: var(--accent);
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 999px;
-      letter-spacing: 0.05em;
-    }
-
-    /* ── Main ─────────────────────────────────────────────────────────── */
-    main { padding: 2.5rem 0 4rem; }
-
-    /* ── Section titles ────────────────────────────────────────────────── */
-    .section-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 0.75rem;
-    }
-    .section-title {
+      font-family: var(--font-display);
       font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--emerald), var(--cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-size: 16px;
+      font-weight: 900;
+      box-shadow: 0 0 20px var(--emerald-glow), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+    }
+    .brand-text {
+      color: #fff;
+    }
+    .brand-accent {
+      color: var(--emerald);
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      margin-left: 4px;
+      padding: 2px 7px;
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 4px;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+    @media (max-width: 820px) {
+      .nav-links { display: none; }
+    }
+    .nav-link {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .nav-link:hover {
+      color: #fff;
+      text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+    }
+
+    /* ── 3D & Glass Buttons ────────────────────────────────────────── */
+    .btn-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
       font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 1.25rem;
-    }
-
-    /* ── Charger Grid ─────────────────────────────────────────────────── */
-    .charger-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    @media (max-width: 640px) {
-      .charger-grid { grid-template-columns: 1fr; }
-    }
-
-    .charger-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.4rem 1.2rem 1.2rem;
-      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+      padding: 0.65rem 1.45rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      text-decoration: none;
       position: relative;
       overflow: hidden;
-      cursor: default;
     }
-    .charger-card::before {
+    .btn-pill::after {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      border-radius: var(--radius) var(--radius) 0 0;
-      transition: opacity var(--transition);
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s ease;
     }
-    .charger-card.available::before { background: linear-gradient(90deg, var(--green), #86efac); }
-    .charger-card.occupied::before  { background: linear-gradient(90deg, var(--red), #fca5a5); }
-
-    .charger-card:hover {
-      transform: translateY(-3px);
-      background: var(--bg-card-hov);
-    }
-    .charger-card.available:hover { box-shadow: 0 8px 32px var(--green-glow); }
-    .charger-card.occupied:hover  { box-shadow: 0 8px 32px var(--red-glow); }
-
-    .card-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.2rem;
-    }
-    .charger-name {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      letter-spacing: 0.04em;
-    }
-
-    .status-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      position: relative;
-    }
-    .status-dot::after {
-      content: '';
-      position: absolute;
-      inset: -4px;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-    .status-dot.available { background: var(--green); }
-    .status-dot.available::after { background: var(--green-glow); }
-    .status-dot.occupied  { background: var(--red); animation: none; }
-    .status-dot.occupied::after  { background: var(--red-glow); animation: none; }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 0.6; }
-      50%       { transform: scale(1.8); opacity: 0; }
-    }
-
-    .charger-icon-wrap {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      margin-bottom: 0.9rem;
-      font-size: 1.6rem;
-      transition: box-shadow var(--transition);
-    }
-    .available .charger-icon-wrap {
-      background: var(--green-glow);
-      box-shadow: 0 0 0 1px rgba(74,222,128,0.25);
-    }
-    .occupied .charger-icon-wrap {
-      background: var(--red-glow);
-      box-shadow: 0 0 0 1px rgba(248,113,113,0.25);
-    }
-
-    .charger-status-text {
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-    .available .charger-status-text { color: var(--green); }
-    .occupied  .charger-status-text { color: var(--red); }
-
-    .charger-id-label {
-      font-size: 0.75rem;
-      color: var(--text-dim);
-      margin-top: 0.3rem;
-    }
-
-    /* ── Bottom panel: Reservation + Activity ─────────────────────────── */
-    .bottom-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      align-items: start;
-    }
-    @media (max-width: 680px) {
-      .bottom-grid { grid-template-columns: 1fr; }
-    }
-
-    .panel {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-    }
-
-    /* ── Form ─────────────────────────────────────────────────────────── */
-    .form-group { margin-bottom: 1rem; }
-    label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      margin-bottom: 0.4rem;
-      letter-spacing: 0.04em;
-    }
-    input, select {
-      width: 100%;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 0.6rem 0.85rem;
-      font-size: 0.88rem;
-      color: var(--text-primary);
-      font-family: inherit;
-      transition: border-color var(--transition), box-shadow var(--transition);
-      outline: none;
-    }
-    input::placeholder { color: var(--text-dim); }
-    input:focus, select:focus {
-      border-color: rgba(34,211,238,0.5);
-      box-shadow: 0 0 0 3px rgba(34,211,238,0.08);
-    }
-    select option { background: #1e293b; color: var(--text-primary); }
-
-    .btn {
-      width: 100%;
-      padding: 0.7rem 1.2rem;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      letter-spacing: 0.02em;
+    .btn-pill:hover::after {
+      left: 100%;
     }
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #818cf8);
-      color: #0b1120;
-      box-shadow: 0 4px 20px rgba(34,211,238,0.25);
+      background: linear-gradient(135deg, var(--emerald) 0%, #059669 100%);
+      color: #04140e;
+      font-weight: 700;
+      box-shadow: 0 8px 24px var(--emerald-glow), inset 0 1px 1px rgba(255, 255, 255, 0.4);
     }
-    .btn-primary:hover  { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(34,211,238,0.35); }
-    .btn-primary:active { transform: translateY(0); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #34d399 0%, var(--emerald) 100%);
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 14px 32px var(--emerald-glow), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+    }
+    .btn-primary:active {
+      transform: translateY(1px) scale(0.98);
+    }
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      border-color: var(--glass-border);
+      color: #fff;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    }
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--glass-border-highlight);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    }
+    .btn-glass:active {
+      transform: translateY(1px);
+    }
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.15);
+      border-color: rgba(244, 63, 94, 0.4);
+      color: #fb7185;
+      backdrop-filter: blur(12px);
+    }
+    .btn-danger:hover {
+      background: rgba(244, 63, 94, 0.25);
+      border-color: #f43f5e;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(244, 63, 94, 0.3);
+    }
 
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid var(--border);
+    /* ── Hero Section ──────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      padding: 8.5rem 1.5rem 3.5rem;
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 3.5rem;
+      align-items: center;
+    }
+    @media (max-width: 960px) {
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 6.5rem;
+        gap: 2.5rem;
+      }
+    }
+
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: var(--radius-pill);
+      color: var(--emerald);
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+    }
+
+    .hero-title {
+      font-size: clamp(2.4rem, 4.8vw, 3.8rem);
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 1.25rem;
+      line-height: 1.12;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+    .hero-title span.highlight {
+      background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 25px rgba(16, 185, 129, 0.3));
+    }
+
+    .hero-description {
+      font-size: 1.05rem;
       color: var(--text-muted);
-      font-size: 0.78rem;
-      padding: 0.45rem 1rem;
-      width: auto;
-      margin-top: 0.6rem;
-    }
-    .btn-ghost:hover { background: var(--bg-card-hov); color: var(--text-primary); }
-
-    /* ── Result banner ────────────────────────────────────────────────── */
-    #result-banner {
-      margin-top: 1rem;
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius-sm);
-      font-size: 0.82rem;
-      font-weight: 500;
-      display: none;
-      animation: fadeIn 0.3s ease;
-    }
-    #result-banner.success {
-      background: var(--green-glow);
-      border: 1px solid rgba(74,222,128,0.3);
-      color: var(--green);
-    }
-    #result-banner.error {
-      background: var(--red-glow);
-      border: 1px solid rgba(248,113,113,0.3);
-      color: var(--red);
+      line-height: 1.7;
+      margin-bottom: 2rem;
+      max-width: 520px;
     }
 
-    /* ── Activity log ────────────────────────────────────────────────── */
-    #activity-log {
-      list-style: none;
+    /* ── Realistic Car Booking Glass Card (3D Tilt Ready) ──────────── */
+    .booking-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.65) 0%, rgba(15, 23, 42, 0.75) 100%);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-glass);
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      max-height: 240px;
-      overflow-y: auto;
+      gap: 1.15rem;
+      margin-bottom: 2rem;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
     }
-    #activity-log li {
+    .booking-card:hover {
+      border-color: var(--glass-border-highlight);
+      box-shadow: var(--shadow-glass-hover);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 0.85rem;
+    }
+    @media (max-width: 540px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .input-group {
       display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      font-size: 0.8rem;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .input-label {
+      font-size: 0.78rem;
+      font-weight: 600;
       color: var(--text-muted);
-      padding: 0.5rem 0.6rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .custom-input, .custom-select {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
       border-radius: var(--radius-sm);
-      background: rgba(255,255,255,0.025);
-      animation: fadeIn 0.3s ease;
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      padding: 0.7rem 0.85rem;
+      outline: none;
+      transition: all 0.2s ease;
+      width: 100%;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
     }
-    #activity-log li .log-dot {
-      width: 6px; height: 6px;
+    .custom-input:focus, .custom-select:focus {
+      border-color: var(--emerald);
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.25);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .custom-select option {
+      background: #0f172a;
+      color: #fff;
+    }
+
+    /* Battery level slider preview */
+    .battery-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.85rem;
+    }
+    .battery-icon-pill {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--emerald);
+      min-width: 45px;
+      text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+    .range-input {
+      flex: 1;
+      accent-color: var(--emerald);
+      cursor: pointer;
+    }
+
+    .booking-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .booking-actions button {
+      flex: 1;
+    }
+
+    .booking-feedback {
+      display: none;
+      font-size: 0.85rem;
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-sm);
+      line-height: 1.5;
+      backdrop-filter: blur(16px);
+    }
+    .booking-feedback.success {
+      display: block;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+    }
+    .booking-feedback.error {
+      display: block;
+      background: rgba(244, 63, 94, 0.12);
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      color: #fb7185;
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.15);
+    }
+
+    /* Active Session Monitor Glass Card */
+    #active-session-card {
+      display: none;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.08));
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      box-shadow: 0 12px 32px rgba(16, 185, 129, 0.15);
+      animation: sessionGlow 3s infinite ease-in-out;
+    }
+    @keyframes sessionGlow {
+      0%, 100% { border-color: rgba(16, 185, 129, 0.45); box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
+      50% { border-color: rgba(6, 182, 212, 0.6); box-shadow: 0 0 25px rgba(6, 182, 212, 0.2); }
+    }
+    .session-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .session-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .session-pulse-dot {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: var(--accent);
-      margin-top: 4px;
-      flex-shrink: 0;
-      opacity: 0.7;
+      background: var(--emerald);
+      box-shadow: 0 0 12px var(--emerald);
+      animation: pulseLive 1.5s infinite;
     }
-    #activity-log li.log-success .log-dot { background: var(--green); }
-    #activity-log li.log-error   .log-dot { background: var(--red); }
-    #activity-log li .log-time {
+    @keyframes pulseLive {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+    }
+
+    .session-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .s-metric {
+      display: flex;
+      flex-direction: column;
+    }
+    .s-metric-val {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .s-metric-lbl {
+      font-size: 0.72rem;
       color: var(--text-dim);
-      font-size: 0.7rem;
-      margin-left: auto;
-      white-space: nowrap;
     }
 
-    /* Scrollbar */
-    #activity-log::-webkit-scrollbar { width: 4px; }
-    #activity-log::-webkit-scrollbar-track { background: transparent; }
-    #activity-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .power-progress {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    .power-progress-bar {
+      height: 100%;
+      width: 28%;
+      background: linear-gradient(90deg, var(--emerald), var(--cyan));
+      border-radius: 3px;
+      box-shadow: 0 0 12px var(--emerald);
+      transition: width 0.5s ease;
+    }
 
-    /* ── Spinner ──────────────────────────────────────────────────────── */
-    .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid rgba(11,17,32,0.4);
-      border-top-color: #0b1120;
+    /* ── Hero Visual Showcase (3D Perspective Stand & Glow) ────────── */
+    .hero-visual-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1200px;
+    }
+    .visual-glow {
+      position: absolute;
+      width: 380px;
+      height: 380px;
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, rgba(6, 182, 212, 0.15) 50%, transparent 70%);
+      filter: blur(50px);
+      z-index: 1;
+      animation: glowBreathing 6s infinite ease-in-out alternate;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Skeleton loader ─────────────────────────────────────────────── */
-    .skeleton {
-      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 4px;
-      height: 14px;
+    @keyframes glowBreathing {
+      0% { transform: scale(1); opacity: 0.7; }
+      100% { transform: scale(1.12); opacity: 1; }
     }
-    @keyframes shimmer { to { background-position: -200% 0; } }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .visual-card {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 480px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%);
+      backdrop-filter: blur(28px);
+      border: 1px solid var(--glass-border-highlight);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 32px 70px -15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(16, 185, 129, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transform-style: preserve-3d;
+    }
+    .visual-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 45px 90px -20px rgba(0, 0, 0, 0.9), 0 0 50px rgba(16, 185, 129, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.45);
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+    .visual-image {
+      width: 100%;
+      height: 420px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.6s ease;
+    }
+    .visual-card:hover .visual-image {
+      transform: scale(1.03);
     }
 
-    /* ── Refresh indicator ───────────────────────────────────────────── */
-    .refresh-indicator {
+    /* ── Charging Stations Grid (Glassmorphism & 3D Tilt) ───────────── */
+    .section-wrap {
+      position: relative;
+      z-index: 1;
+      padding: 5rem 1.5rem;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    .section-header {
+      text-align: center;
+      max-width: 620px;
+      margin: 0 auto 3.5rem;
+    }
+    .section-subtitle {
+      color: var(--emerald);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.75rem;
+    }
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .bays-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.75rem;
+      perspective: 1200px;
+    }
+    @media (max-width: 860px) {
+      .bays-grid { grid-template-columns: 1fr; }
+    }
+
+    .bay-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.75) 100%);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 1.85rem;
+      box-shadow: var(--shadow-glass);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transform-style: preserve-3d;
+    }
+    /* Dynamic cursor sheen shine on card */
+    .bay-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.08), transparent 60%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .bay-card:hover::before {
+      opacity: 1;
+    }
+    .bay-card:hover {
+      border-color: var(--glass-border-highlight);
+      box-shadow: var(--shadow-glass-hover);
+      transform: translateY(-8px) scale(1.02);
+    }
+    .bay-card.is-available {
+      border-top: 3px solid var(--emerald);
+    }
+    .bay-card.is-available:hover {
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(16, 185, 129, 0.3);
+    }
+    .bay-card.is-occupied {
+      border-top: 3px solid var(--rose);
+      background: linear-gradient(180deg, rgba(244, 63, 94, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+    }
+    .bay-card.is-occupied:hover {
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(244, 63, 94, 0.25);
+    }
+
+    .bay-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.25rem;
+    }
+    .bay-id-title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .bay-spec {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+    }
+    .bay-status-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.7rem;
-      color: var(--text-dim);
+      backdrop-filter: blur(12px);
     }
-    .refresh-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2.5s infinite;
+    .status-available {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+    }
+    .status-occupied {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      color: #fb7185;
+      box-shadow: 0 0 15px rgba(244, 63, 94, 0.2);
+    }
+
+    .bay-car-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .bay-power-display {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 1.15rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    .bay-power-num {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .bay-power-type {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .power-icon {
+      font-size: 1.6rem;
+      filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+    }
+
+    .bay-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .bay-btn {
+      width: 100%;
+      padding: 0.65rem 1rem;
+      font-size: 0.88rem;
+    }
+
+    /* ── SYSTEM RELIABILITY & NETWORK HEALTH (LAYMAN'S TERMS) ──────── */
+    .health-box {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.75) 100%);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 2.25rem;
+      box-shadow: var(--shadow-glass);
+      margin-top: 1rem;
+    }
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 900px) {
+      .health-grid { grid-template-columns: 1fr; }
+    }
+
+    .health-card {
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
+    }
+    .health-card:hover {
+      border-color: var(--glass-border-highlight);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    }
+    .health-card-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .health-card-desc {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-bottom: 1.15rem;
+      line-height: 1.5;
+    }
+    .health-metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      margin-bottom: 1rem;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    .health-metric-num {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--emerald);
+      text-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Real-Time Transaction Log Feed */
+    .terminal-feed {
+      background: rgba(4, 7, 17, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: #a7f3d0;
+      max-height: 170px;
+      overflow-y: auto;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+    }
+    .terminal-feed::-webkit-scrollbar { width: 4px; }
+    .terminal-feed::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
+    .log-line {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+    .log-time { color: var(--text-dim); }
+    .log-tag { font-weight: 700; color: var(--cyan); }
+    .log-tag.tag-queue { color: var(--amber); }
+    .log-tag.tag-server { color: var(--purple); }
+    .log-tag.tag-conflict { color: var(--rose); }
+
+    /* ── Footer ────────────────────────────────────────────────────── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--glass-border);
+      padding: 3rem 1.5rem 4rem;
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+    @media (max-width: 600px) {
+      footer { flex-direction: column; gap: 1rem; text-align: center; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── Header ─────────────────────────────────────────────────────────── -->
-<header>
-  <div class="container">
-    <div class="header-inner">
-      <div class="logo">
-        <div class="logo-icon">⚡</div>
-        <div class="logo-text">
-          <strong>EVCharge</strong>
-          <span>Smart EV Charging Management</span>
-        </div>
-      </div>
-      <div class="badge">DEMO</div>
-    </div>
-  </div>
-</header>
+  <!-- Ambient Light Orbs for Glass Refraction -->
+  <div class="ambient-orb orb-1"></div>
+  <div class="ambient-orb orb-2"></div>
 
-<!-- ── Main ───────────────────────────────────────────────────────────── -->
-<main>
-  <div class="container">
-
-    <!-- Charger Status -->
-    <div class="section-label">Live Charger Status</div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-      <h1 class="section-title" style="margin-bottom:0;">Charging Stations</h1>
-      <span class="refresh-indicator">
-        <span class="refresh-dot"></span> Live
-        <button id="btn-refresh" class="btn btn-ghost" style="margin-top:0; padding:0.3rem 0.8rem;" onclick="loadSlots()">↻ Refresh</button>
-      </span>
-    </div>
-
-    <div class="charger-grid" id="charger-grid">
-      <!-- Cards injected by JS -->
-      <div class="charger-card" style="padding:2rem;">
-        <div class="skeleton" style="margin-bottom:0.6rem;"></div>
-        <div class="skeleton" style="width:60%;"></div>
-      </div>
-      <div class="charger-card" style="padding:2rem;">
-        <div class="skeleton" style="margin-bottom:0.6rem;"></div>
-        <div class="skeleton" style="width:60%;"></div>
-      </div>
-      <div class="charger-card" style="padding:2rem;">
-        <div class="skeleton" style="margin-bottom:0.6rem;"></div>
-        <div class="skeleton" style="width:60%;"></div>
-      </div>
-    </div>
-
-    <!-- Bottom panel -->
-    <div class="bottom-grid">
-
-      <!-- Reservation form -->
-      <div class="panel" id="reservation-panel">
-        <div class="section-label">Reserve a Slot</div>
-        <div class="section-title">Request Charging</div>
-
-        <div class="form-group">
-          <label for="ev-id">EV ID</label>
-          <input type="text" id="ev-id" placeholder="e.g. EV102" maxlength="20" autocomplete="off" />
-        </div>
-
-        <div class="form-group">
-          <label for="charger-select">Select Charger</label>
-          <select id="charger-select">
-            <option value="">— select a charger —</option>
-            <option value="Charger_01">Charger 01</option>
-            <option value="Charger_02">Charger 02</option>
-            <option value="Charger_03">Charger 03</option>
-          </select>
-        </div>
-
-        <button class="btn btn-primary" id="btn-reserve" onclick="requestCharging()">
-          <span id="btn-label">⚡ Request Charging</span>
-        </button>
-
-        <div id="result-banner"></div>
+  <!-- ── Floating Navbar ───────────────────────────────────────────── -->
+  <header class="nav-container">
+    <nav class="navbar">
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <span class="brand-text">STORM</span>
+        <span class="brand-accent">EV</span>
       </div>
 
-      <!-- Activity log -->
-      <div class="panel" id="activity-panel">
-        <div class="section-label">System Activity</div>
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-          <div class="section-title" style="margin-bottom:0;">Recent Actions</div>
-          <button class="btn btn-ghost" style="margin-top:0; font-size:0.7rem; padding:0.3rem 0.75rem;" onclick="clearLog()">Clear</button>
-        </div>
-        <ul id="activity-log"></ul>
+      <ul class="nav-links">
+        <li><a href="#stations" class="nav-link">Charging Stations</a></li>
+        <li><a href="#network-health" class="nav-link">Network Health</a></li>
+        <li><a href="#active-session" class="nav-link" id="nav-session-link" style="display:none; color:var(--emerald);">● Live Session</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="#stations" class="btn-pill btn-primary">Book Charger</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ── Hero Section ──────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="tag-pill">
+        <span>⚡</span> SMART EV CHARGING INFRASTRUCTURE
       </div>
 
-    </div><!-- /bottom-grid -->
+      <h1 class="hero-title">
+        Fast, Intelligent <br />
+        <span class="highlight">EV Charging</span>
+      </h1>
 
-  </div><!-- /container -->
-</main>
+      <p class="hero-description">
+        Next-generation fast charging for electric vehicles. Select your vehicle, choose an available high-speed charger, and enjoy real-time power delivery with automated smart grid coordination.
+      </p>
 
-<script>
-  // ── State ──────────────────────────────────────────────────────────────
-  let slots = [];   // latest charger data from /slots
-
-  // ── Log helpers ────────────────────────────────────────────────────────
-  function now() {
-    return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  }
-
-  function addLog(text, type = 'info') {
-    const ul = document.getElementById('activity-log');
-    const li = document.createElement('li');
-    if (type === 'success') li.className = 'log-success';
-    if (type === 'error')   li.className = 'log-error';
-    li.innerHTML = `<span class="log-dot"></span><span>${text}</span><span class="log-time">${now()}</span>`;
-    ul.prepend(li);
-    // Cap at 30 entries
-    while (ul.children.length > 30) ul.removeChild(ul.lastChild);
-  }
-
-  function clearLog() {
-    document.getElementById('activity-log').innerHTML = '';
-  }
-
-  // ── Load charger slots ─────────────────────────────────────────────────
-  async function loadSlots() {
-    addLog('Fetching charger status via gRPC...');
-    try {
-      const resp = await fetch('/slots');
-      if (!resp.ok) throw new Error('Network error');
-      slots = await resp.json();
-      renderCards(slots);
-      updateChargerSelect(slots);
-      addLog('Charger status loaded.', 'success');
-    } catch (e) {
-      addLog('Failed to reach Reservation Service.', 'error');
-      console.error(e);
-    }
-  }
-
-  // ── Render charger cards ───────────────────────────────────────────────
-  function renderCards(data) {
-    const grid = document.getElementById('charger-grid');
-    grid.innerHTML = '';
-    const icons = { available: '✅', occupied: '🔌' };
-    data.forEach(c => {
-      const cls = c.available ? 'available' : 'occupied';
-      const label = c.status.charAt(0) + c.status.slice(1).toLowerCase();
-      const displayName = c.id.replace('_', ' ');
-      grid.innerHTML += `
-        <div class="charger-card ${cls}" id="card-${c.id}">
-          <div class="card-top">
-            <span class="charger-name">${displayName}</span>
-            <span class="status-dot ${cls}"></span>
+      <!-- Realistic Car Booking Glass Card -->
+      <div class="booking-card">
+        <div class="form-grid">
+          <div class="input-group">
+            <label class="input-label">Select Your Electric Vehicle</label>
+            <select id="hero-car-model" class="custom-select">
+              <option value="Tesla Model 3 Long Range">Tesla Model 3 Long Range</option>
+              <option value="Hyundai Ioniq 5">Hyundai Ioniq 5</option>
+              <option value="Tata Nexon EV Max">Tata Nexon EV Max</option>
+              <option value="Porsche Taycan Turbo S">Porsche Taycan Turbo S</option>
+              <option value="BMW i4 eDrive40">BMW i4 eDrive40</option>
+            </select>
           </div>
-          <div class="charger-icon-wrap">${icons[cls]}</div>
-          <div class="charger-status-text">${label}</div>
-          <div class="charger-id-label">${c.id.replace('_', '-')}</div>
-        </div>`;
-    });
-  }
+          <div class="input-group">
+            <label class="input-label">Vehicle Registration Plate</label>
+            <input type="text" id="hero-ev-id" class="custom-input" value="MH-12-EV-8842" placeholder="e.g. MH-12-EV-8842" />
+          </div>
+        </div>
 
-  // ── Keep charger select in sync ────────────────────────────────────────
-  function updateChargerSelect(data) {
-    const sel = document.getElementById('charger-select');
-    const current = sel.value;
-    sel.innerHTML = '<option value="">— select a charger —</option>';
-    data.forEach(c => {
-      const displayName = c.id.replace('_', ' ');
-      const tag = c.available ? '' : ' (Occupied)';
-      sel.innerHTML += `<option value="${c.id}" ${!c.available ? 'disabled' : ''}>${displayName}${tag}</option>`;
-    });
-    // Restore selection if still valid
-    if (current) sel.value = current;
-  }
+        <div class="form-grid">
+          <div class="input-group">
+            <label class="input-label">Choose Charging Station</label>
+            <select id="hero-charger-select" class="custom-select">
+              <option value="Charger_01">Charger 1 — 150 kW DC Fast</option>
+              <option value="Charger_02">Charger 2 — 22 kW AC Level 2</option>
+              <option value="Charger_03">Charger 3 — 350 kW Ultra-DC</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Current Battery SOC (%): <strong id="soc-display" style="color:var(--emerald);">28%</strong></label>
+            <div class="battery-slider-row">
+              <span class="battery-icon-pill" id="soc-pill">28%</span>
+              <input type="range" id="hero-soc-range" class="range-input" min="5" max="85" value="28" oninput="updateSocDisplay(this.value)" />
+            </div>
+          </div>
+        </div>
 
-  // ── Request charging ───────────────────────────────────────────────────
-  async function requestCharging() {
-    const evId      = document.getElementById('ev-id').value.trim();
-    const chargerId = document.getElementById('charger-select').value;
-    const btn       = document.getElementById('btn-reserve');
-    const btnLabel  = document.getElementById('btn-label');
-    const banner    = document.getElementById('result-banner');
+        <div class="booking-actions">
+          <button class="btn-pill btn-primary" onclick="startChargingSession()">
+            <span>⚡</span> Plug In & Start Fast Charge
+          </button>
+          <button class="btn-pill btn-glass" onclick="stopCurrentSession()">
+            Unplug & Release
+          </button>
+        </div>
 
-    // Validate
-    if (!evId) {
-      showBanner('Please enter an EV ID.', false);
-      return;
+        <div id="booking-feedback" class="booking-feedback"></div>
+
+        <!-- Live Dynamic Active Session Card -->
+        <div id="active-session-card">
+          <div class="session-top">
+            <div class="session-title">
+              <span class="session-pulse-dot"></span>
+              <span id="session-car-title">Tesla Model 3 Long Range</span>
+              <span class="mono" style="font-size:0.75rem; color:var(--text-muted);" id="session-plate-title">[MH-12-EV-8842]</span>
+            </div>
+            <span class="tag-pill" style="margin:0; padding:2px 8px; font-size:0.72rem;">STATION LOCKED</span>
+          </div>
+
+          <div class="session-metrics-grid">
+            <div class="s-metric">
+              <span class="s-metric-val" id="session-live-soc" style="color:var(--emerald);">28%</span>
+              <span class="s-metric-lbl">Battery SOC</span>
+            </div>
+            <div class="s-metric">
+              <span class="s-metric-val" id="session-live-power">148.6 kW</span>
+              <span class="s-metric-lbl">Power Output</span>
+            </div>
+            <div class="s-metric">
+              <span class="s-metric-val" id="session-live-energy">0.00 kWh</span>
+              <span class="s-metric-lbl">Energy Delivered</span>
+            </div>
+          </div>
+
+          <div class="power-progress">
+            <div class="power-progress-bar" id="session-progress-bar"></div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
+            <span>Connected to <strong id="session-station-name" style="color:#fff;">Charger 1</strong></span>
+            <button class="btn-pill btn-danger" style="padding:4px 12px; font-size:0.75rem;" onclick="stopCurrentSession()">Stop & Unplug</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Row -->
+      <div style="display:flex; gap:2rem; padding-top:0.75rem; border-top:1px solid var(--glass-border);">
+        <div>
+          <div class="heading-display" style="font-size:1.45rem; font-weight:700;">350 kW</div>
+          <div style="font-size:0.75rem; color:var(--text-dim);">Max Speed</div>
+        </div>
+        <div>
+          <div class="heading-display" style="font-size:1.45rem; font-weight:700;" style="color:var(--emerald);">100%</div>
+          <div style="font-size:0.75rem; color:var(--text-dim);">Uptime Guarantee</div>
+        </div>
+        <div>
+          <div class="heading-display" style="font-size:1.45rem; font-weight:700;">Instant</div>
+          <div style="font-size:0.75rem; color:var(--text-dim);">Smart Booking</div>
+        </div>
+        <div>
+          <div class="heading-display" style="font-size:1.45rem; font-weight:700;">&lt; 15ms</div>
+          <div style="font-size:0.75rem; color:var(--text-dim);">Grid Response</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Clean 3D Charger Showcase with 3D Depth Stand -->
+    <div class="hero-visual-wrapper">
+      <div class="visual-glow"></div>
+      <div class="visual-card">
+        <img src="/assets/storm_charger.jpg" alt="Storm EV Charging Station" class="visual-image" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Available Charging Stations Section ───────────────────────── -->
+  <section id="stations" class="section-wrap">
+    <div class="section-header">
+      <div class="section-subtitle">Real-Time Grid Status</div>
+      <h2 class="section-title">Charging Station Terminals</h2>
+      <p class="section-desc">Select an available charger below to plug in your car. Station availability updates instantly across the entire grid.</p>
+    </div>
+
+    <div class="bays-grid" id="bays-container">
+      <!-- Dynamically populated from /slots with 3D tilt tracking -->
+    </div>
+  </section>
+
+  <!-- ── SYSTEM RELIABILITY & NETWORK HEALTH (LAYMAN'S TERMS) ──────── -->
+  <section id="network-health" class="section-wrap" style="padding-top:1rem;">
+    <div class="section-header">
+      <div class="section-subtitle">System Reliability</div>
+      <h2 class="section-title">Automated Cloud Grid Diagnostics</h2>
+      <p class="section-desc">Our intelligent charging network runs continuous self-monitoring and automated fault recovery. Test how the grid handles heavy traffic and maintains uninterrupted service below.</p>
+    </div>
+
+    <div class="health-box">
+      <div class="health-grid">
+
+        <!-- 1. Booking Queue (Lamport Clocks in Layman Terms) -->
+        <div class="health-card">
+          <div>
+            <div class="health-card-title">
+              <span>⏱️</span> Fair Booking Queue
+            </div>
+            <p class="health-card-desc">When multiple drivers attempt to book at the exact same millisecond, this queue synchronizes and orders each request fairly without skipping anyone.</p>
+            <div class="health-metric-row">
+              <span style="font-size:0.8rem; color:var(--text-dim);">Current Queue ID:</span>
+              <span class="health-metric-num" id="lab-lamport-val">#8</span>
+            </div>
+          </div>
+          <button class="btn-pill btn-glass" style="width:100%;" onclick="triggerLamportTick()">
+            <span>⚡</span> Simulate New Request (+1)
+          </button>
+        </div>
+
+        <!-- 2. Server Failover (Raft Consensus in Layman Terms) -->
+        <div class="health-card">
+          <div>
+            <div class="health-card-title">
+              <span>🛡️</span> Server Backup & Failover
+            </div>
+            <p class="health-card-desc">Multiple cloud backup servers monitor the primary coordinator. If the primary disconnects, a backup automatically takes over within milliseconds.</p>
+            <div class="health-metric-row">
+              <span style="font-size:0.8rem; color:var(--text-dim);">Active Primary:</span>
+              <span class="health-metric-num" id="lab-raft-leader" style="font-size:1.1rem; color:var(--cyan);">Server-A (Online)</span>
+            </div>
+          </div>
+          <button class="btn-pill btn-danger" style="width:100%;" onclick="killRaftLeader()">
+            <span>💥</span> Simulate Outage (Auto-Failover)
+          </button>
+        </div>
+
+        <!-- 3. Resource Conflict Resolver (Deadlock Detection in Layman Terms) -->
+        <div class="health-card">
+          <div>
+            <div class="health-card-title">
+              <span>🔒</span> Power Conflict Resolver
+            </div>
+            <p class="health-card-desc">Prevents gridlock if multiple stations compete for shared battery buffer power at the same moment, resolving conflicts before any interruption occurs.</p>
+            <div class="health-metric-row">
+              <span style="font-size:0.8rem; color:var(--text-dim);">Grid Conflict Status:</span>
+              <span class="health-metric-num" id="lab-deadlock-status" style="font-size:0.95rem;">NORMAL</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-pill btn-danger" style="flex:1; padding:6px 10px; font-size:0.75rem;" onclick="simulateDeadlock()">
+              Simulate Conflict
+            </button>
+            <button class="btn-pill btn-primary" style="flex:1; padding:6px 10px; font-size:0.75rem;" onclick="resolveDeadlock()">
+              Auto-Resolve
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Live Real-Time Transaction Log Feed -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span class="mono" style="font-size:0.75rem; color:var(--text-muted);">REAL-TIME NETWORK EVENT MONITOR</span>
+        <button class="btn-pill btn-glass" style="padding:2px 10px; font-size:0.72rem;" onclick="clearTrace()">Clear Log</button>
+      </div>
+      <div class="terminal-feed" id="terminal-feed">
+        <div class="log-line">
+          <span class="log-time">[00:00:01]</span>
+          <span class="log-tag">[NETWORK]</span>
+          <span>Smart Grid Cloud Coordinator active and monitoring all stations.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ────────────────────────────────────────────────────── -->
+  <footer>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="session-pulse-dot" style="width:6px; height:6px;"></span>
+      <span><strong>Storm EV</strong> · High-Speed Charging Network & Cloud Grid Coordination</span>
+    </div>
+    <div>
+      Smart Electric Vehicle Infrastructure Project &copy; 2026
+    </div>
+  </footer>
+
+  <!-- ── Interactive JavaScript & 3D Tilt Engine ───────────────────── -->
+  <script>
+    const CHARGER_INFO = {
+      'Charger_01': { name: 'Charger 1', type: '150 kW DC Fast Charge', speed: '150 kW', kw: 150, icon: '⚡' },
+      'Charger_02': { name: 'Charger 2', type: '22 kW AC Level 2', speed: '22 kW', kw: 22, icon: '🔌' },
+      'Charger_03': { name: 'Charger 3', type: '350 kW Ultra-DC Fast', speed: '350 kW', kw: 350, icon: '⚡' }
+    };
+
+    let activeChargingTimer = null;
+    let currentChargingSession = null;
+
+    function updateSocDisplay(val) {
+      document.getElementById('soc-display').textContent = val + '%';
+      document.getElementById('soc-pill').textContent = val + '%';
     }
-    if (!chargerId) {
-      showBanner('Please select a charger.', false);
-      return;
+
+    function logEvent(tag, message, tagClass = '') {
+      const feed = document.getElementById('terminal-feed');
+      if (!feed) return;
+      const now = new Date().toTimeString().split(' ')[0];
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.innerHTML = `
+        <span class="log-time">[${now}]</span>
+        <span class="log-tag ${tagClass}">[${tag}]</span>
+        <span>${message}</span>
+      `;
+      feed.insertBefore(line, feed.firstChild);
     }
 
-    // Loading state
-    btn.disabled = true;
-    btnLabel.innerHTML = '<span class="spinner"></span> Communicating...';
-    banner.style.display = 'none';
+    function clearTrace() {
+      document.getElementById('terminal-feed').innerHTML = '';
+      logEvent('SYSTEM', 'Network log cleared.');
+    }
 
-    addLog(`${evId} requested ${chargerId.replace('_',' ')}`);
-    addLog('Checking charger availability via gRPC...');
-
-    try {
-      const resp = await fetch('/reserve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ev_id: evId, charger_id: chargerId }),
+    // ── Interactive 3D Card Hover / Mouse Move Engine ────────────────
+    function attach3DTilt(element) {
+      if (!element) return;
+      element.addEventListener('mousemove', e => {
+        const rect = element.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -6;
+        const rotateY = ((x - centerX) / centerX) * 6;
+        element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px)`;
+        element.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
+        element.style.setProperty('--mouse-y', `${(y / rect.height) * 100}%`);
       });
-      const data = await resp.json();
-
-      // Add activity from server
-      if (data.activity) {
-        data.activity.forEach((msg, i) => {
-          if (i > 0) addLog(msg, data.success && i === data.activity.length - 1 ? 'success' : 'info');
-        });
-      }
-
-      if (data.success) {
-        showBanner('✓ ' + data.message, true);
-        addLog('Reservation complete — refreshing slots...', 'success');
-        await loadSlots();
-      } else {
-        showBanner('✗ ' + data.message, false);
-        addLog('Reservation failed.', 'error');
-      }
-    } catch (e) {
-      showBanner('Connection error — is the backend running?', false);
-      addLog('Connection error.', 'error');
-      console.error(e);
-    } finally {
-      btn.disabled = false;
-      btnLabel.innerHTML = '⚡ Request Charging';
+      element.addEventListener('mouseleave', () => {
+        element.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
+      });
     }
-  }
 
-  function showBanner(msg, success) {
-    const b = document.getElementById('result-banner');
-    b.textContent = msg;
-    b.className   = success ? 'success' : 'error';
-    b.style.display = 'block';
-  }
+    // ── Load and Render Stations ────────────────────────────────────
+    async function loadStations() {
+      try {
+        const res = await fetch('/slots');
+        const slots = await res.json();
+        const container = document.getElementById('bays-container');
+        if (!container) return;
 
-  // ── Enter key to submit ────────────────────────────────────────────────
-  document.getElementById('ev-id').addEventListener('keydown', e => {
-    if (e.key === 'Enter') requestCharging();
-  });
+        container.innerHTML = '';
+        slots.forEach(s => {
+          const info = CHARGER_INFO[s.id] || { name: s.id, type: 'Fast Charge', speed: '150 kW', icon: '⚡' };
+          const isAvail = s.available;
 
-  // ── Init ───────────────────────────────────────────────────────────────
-  addLog('EVCharge UI initialised');
-  addLog('Connecting to Reservation Service...');
-  loadSlots();
-</script>
+          const card = document.createElement('div');
+          card.className = `bay-card ${isAvail ? 'is-available' : 'is-occupied'}`;
+          
+          let carInfoHtml = '';
+          if (!isAvail) {
+            carInfoHtml = `
+              <div class="bay-car-badge">
+                <div>
+                  <strong style="color:#fff;">${s.car_model || 'Electric Vehicle'}</strong>
+                  <div style="font-size:0.72rem; color:var(--text-dim);">${s.user || 'EV-Active'}</div>
+                </div>
+                <span class="mono" style="color:var(--emerald); font-weight:700;">${s.battery_level ? s.battery_level + '%' : 'CHARGING'}</span>
+              </div>
+            `;
+          }
 
+          card.innerHTML = `
+            <div>
+              <div class="bay-header">
+                <div>
+                  <div class="bay-id-title">${info.name}</div>
+                  <div class="bay-spec">${info.type}</div>
+                </div>
+                <span class="bay-status-badge ${isAvail ? 'status-available' : 'status-occupied'}">
+                  ${isAvail ? '● AVAILABLE' : '● CHARGING'}
+                </span>
+              </div>
+
+              ${carInfoHtml}
+
+              <div class="bay-power-display">
+                <div>
+                  <div class="bay-power-num">${info.speed}</div>
+                  <div class="bay-power-type">${isAvail ? 'Ready for connection' : 'Delivering power to vehicle'}</div>
+                </div>
+                <div class="power-icon">${info.icon}</div>
+              </div>
+            </div>
+
+            <div class="bay-actions">
+              ${isAvail 
+                ? `<button class="btn-pill btn-primary bay-btn" onclick="quickSelectStation('${s.id}')">⚡ Book & Charge</button>` 
+                : `<button class="btn-pill btn-glass bay-btn" onclick="directReleaseStation('${s.id}')">Unplug & Free</button>`
+              }
+            </div>
+          `;
+          container.appendChild(card);
+          attach3DTilt(card);
+        });
+      } catch (e) {
+        console.warn('Error loading stations:', e);
+      }
+    }
+
+    function quickSelectStation(cid) {
+      document.getElementById('hero-charger-select').value = cid;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Start Dynamic Charging Session ──────────────────────────────
+    async function startChargingSession() {
+      const chargerId = document.getElementById('hero-charger-select').value;
+      const evId = document.getElementById('hero-ev-id').value.trim() || 'MH-12-EV-8842';
+      const carModel = document.getElementById('hero-car-model').value;
+      let soc = parseInt(document.getElementById('hero-soc-range').value) || 28;
+
+      const feedback = document.getElementById('booking-feedback');
+
+      try {
+        const res = await fetch('/reserve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            charger_id: chargerId,
+            ev_id: evId,
+            car_model: carModel,
+            battery_level: soc,
+            target_kwh: 45
+          })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          feedback.className = 'booking-feedback success';
+          feedback.innerHTML = `✓ <strong>${data.message}</strong><br /><span style="font-size:0.75rem; color:var(--text-dim);">Charging session authorized · Transaction Queue ID: #${data.clock_tick || 'N/A'}</span>`;
+          
+          logEvent('BOOKING', `Station ${chargerId} reserved for ${carModel} [${evId}]. Session active.`, 'tag-queue');
+          logEvent('POWER', `Power delivery initiated on ${chargerId} at max rate.`, 'tag-queue');
+
+          launchActiveSessionDisplay(chargerId, carModel, evId, soc);
+        } else {
+          feedback.className = 'booking-feedback error';
+          feedback.textContent = `✗ ${data.message || 'Charger is currently occupied.'}`;
+          logEvent('BOOKING', `Booking rejected: ${data.message}`, 'tag-conflict');
+        }
+      } catch (err) {
+        feedback.className = 'booking-feedback error';
+        feedback.textContent = '✗ Network error communicating with charging network.';
+      }
+
+      loadStations();
+      refreshHealthStatus();
+    }
+
+    function launchActiveSessionDisplay(chargerId, carModel, evId, startingSoc) {
+      const card = document.getElementById('active-session-card');
+      const navLink = document.getElementById('nav-session-link');
+      if (card) card.style.display = 'block';
+      if (navLink) navLink.style.display = 'block';
+
+      document.getElementById('session-car-title').textContent = carModel;
+      document.getElementById('session-plate-title').textContent = `[${evId}]`;
+      const info = CHARGER_INFO[chargerId] || { name: chargerId, kw: 150 };
+      document.getElementById('session-station-name').textContent = info.name;
+
+      if (activeChargingTimer) clearInterval(activeChargingTimer);
+
+      let currentSoc = startingSoc;
+      let energyDelivered = 0.0;
+
+      currentChargingSession = { chargerId, evId };
+
+      activeChargingTimer = setInterval(() => {
+        if (currentSoc < 90) {
+          currentSoc += 1;
+          energyDelivered += 0.28;
+
+          document.getElementById('session-live-soc').textContent = currentSoc + '%';
+          document.getElementById('session-progress-bar').style.width = currentSoc + '%';
+          document.getElementById('session-live-energy').textContent = energyDelivered.toFixed(2) + ' kWh';
+
+          const kw = (info.kw - Math.random() * 3).toFixed(1);
+          document.getElementById('session-live-power').textContent = kw + ' kW';
+        }
+      }, 1800);
+    }
+
+    async function stopCurrentSession() {
+      const chargerId = currentChargingSession ? currentChargingSession.chargerId : document.getElementById('hero-charger-select').value;
+      await directReleaseStation(chargerId);
+    }
+
+    async function directReleaseStation(chargerId) {
+      if (activeChargingTimer) clearInterval(activeChargingTimer);
+      document.getElementById('active-session-card').style.display = 'none';
+      document.getElementById('nav-session-link').style.display = 'none';
+
+      const feedback = document.getElementById('booking-feedback');
+      try {
+        const res = await fetch('/update_status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ charger_id: chargerId, status: 'AVAILABLE' })
+        });
+        const data = await res.json();
+
+        feedback.className = 'booking-feedback success';
+        feedback.textContent = `✓ ${chargerId} has been successfully unplugged and released for other drivers.`;
+        logEvent('NETWORK', `Station ${chargerId} released. Power flow ended safely.`, 'tag-queue');
+      } catch (e) {
+        feedback.className = 'booking-feedback error';
+        feedback.textContent = '✗ Error releasing station.';
+      }
+
+      loadStations();
+      refreshHealthStatus();
+    }
+
+    // ── LAYMAN-FRIENDLY SYSTEM HEALTH CONTROLS ───────────────────────
+    async function triggerLamportTick() {
+      try {
+        const res = await fetch('/api/lamport/tick', { method: 'POST' });
+        const data = await res.json();
+        document.getElementById('lab-lamport-val').textContent = `#${data.new_timestamp}`;
+        logEvent('QUEUE', `Simulated concurrent booking request processed. Queue ID advanced to #${data.new_timestamp}`, 'tag-queue');
+      } catch (e) {}
+    }
+
+    async function killRaftLeader() {
+      try {
+        const res = await fetch('/api/raft/kill_leader', { method: 'POST' });
+        const data = await res.json();
+        document.getElementById('lab-raft-leader').textContent = `${data.new_leader} (Online)`;
+        logEvent('FAILOVER', `Simulated outage: ${data.old_leader} went offline. Backup server ${data.new_leader} automatically promoted to Primary!`, 'tag-server');
+      } catch (e) {}
+    }
+
+    async function simulateDeadlock() {
+      try {
+        const res = await fetch('/api/deadlock/simulate', { method: 'POST' });
+        const data = await res.json();
+        const el = document.getElementById('lab-deadlock-status');
+        el.textContent = 'CONFLICT DETECTED';
+        el.style.color = 'var(--rose)';
+        logEvent('CONFLICT', 'Simulated grid conflict: Stations competing simultaneously for shared power buffer!', 'tag-conflict');
+      } catch (e) {}
+    }
+
+    async function resolveDeadlock() {
+      try {
+        const res = await fetch('/api/deadlock/resolve', { method: 'POST' });
+        const data = await res.json();
+        const el = document.getElementById('lab-deadlock-status');
+        el.textContent = 'NORMAL';
+        el.style.color = 'var(--emerald)';
+        logEvent('RESOLVED', `Conflict auto-resolved: Priority scheduling granted power safely to Station 1.`, 'tag-queue');
+      } catch (e) {}
+    }
+
+    // ── Poll Health Status ──────────────────────────────────────────
+    async function refreshHealthStatus() {
+      try {
+        const res = await fetch('/api/summary');
+        const data = await res.json();
+
+        if (data.clock_tick !== undefined) {
+          document.getElementById('lab-lamport-val').textContent = `#${data.clock_tick}`;
+        }
+        if (data.raft_leader) {
+          document.getElementById('lab-raft-leader').textContent = `${data.raft_leader} (Online)`;
+        }
+        if (data.deadlock_active !== undefined) {
+          const el = document.getElementById('lab-deadlock-status');
+          el.textContent = data.deadlock_active ? 'CONFLICT DETECTED' : 'NORMAL';
+          el.style.color = data.deadlock_active ? 'var(--rose)' : 'var(--emerald)';
+        }
+      } catch (e) {}
+    }
+
+    // ── Init on load & attach 3D tilt to cards ──────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStations();
+      refreshHealthStatus();
+      setInterval(loadStations, 3500);
+      setInterval(refreshHealthStatus, 4500);
+
+      // Attach 3D tilt tracking to existing static cards
+      document.querySelectorAll('.health-card, .visual-card').forEach(el => attach3DTilt(el));
+    });
+  </script>
 </body>
 </html>

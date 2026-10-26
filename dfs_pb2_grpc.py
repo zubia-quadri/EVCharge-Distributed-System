@@ -5,7 +5,7 @@ import warnings
 
 import dfs_pb2 as dfs__pb2
 
-GRPC_GENERATED_VERSION = '1.84.0'
+GRPC_GENERATED_VERSION = '1.75.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -18,14 +18,14 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in dfs_pb2_grpc.py depends on'
+        + f' but the generated code in dfs_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
     )
 
 
-class DfsMetadataServiceStub:
+class DfsMetadataServiceStub(object):
     """Distributed file system: a metadata server plus storage nodes.
     A metadata server tracks which storage nodes hold which chunks of each
     file. Storage nodes keep the actual chunk bytes on disk and send
@@ -71,7 +71,7 @@ class DfsMetadataServiceStub:
                 _registered_method=True)
 
 
-class DfsMetadataServiceServicer:
+class DfsMetadataServiceServicer(object):
     """Distributed file system: a metadata server plus storage nodes.
     A metadata server tracks which storage nodes hold which chunks of each
     file. Storage nodes keep the actual chunk bytes on disk and send
@@ -156,7 +156,7 @@ def add_DfsMetadataServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class DfsMetadataService:
+class DfsMetadataService(object):
     """Distributed file system: a metadata server plus storage nodes.
     A metadata server tracks which storage nodes hold which chunks of each
     file. Storage nodes keep the actual chunk bytes on disk and send
@@ -327,7 +327,7 @@ class DfsMetadataService:
             _registered_method=True)
 
 
-class DfsStorageServiceStub:
+class DfsStorageServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -348,7 +348,7 @@ class DfsStorageServiceStub:
                 _registered_method=True)
 
 
-class DfsStorageServiceServicer:
+class DfsStorageServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def PutChunk(self, request, context):
@@ -384,7 +384,7 @@ def add_DfsStorageServiceServicer_to_server(servicer, server):
 
 
  # This class is part of an EXPERIMENTAL API.
-class DfsStorageService:
+class DfsStorageService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
