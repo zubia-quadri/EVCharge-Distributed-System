@@ -63,9 +63,12 @@ state_lock = threading.Lock()
 # XP 1 & 2: Local fallback state when standalone charging_service is not running
 local_chargers = {
     "Charger_01": {"available": True, "status": "AVAILABLE", "user": None},
-    "Charger_02": {"available": False, "status": "OCCUPIED", "user": "EV999"},
+    "Charger_02": {"available": True, "status": "AVAILABLE", "user": None},
     "Charger_03": {"available": True, "status": "AVAILABLE", "user": None},
 }
+
+# Ricart-Agrawala Deferred Wait Queue for concurrent conflicts
+ricart_deferred_queue = []
 
 # XP 3: Lamport Clock History
 lamport_history = [
@@ -275,10 +278,37 @@ def reserve():
             clock.receive(avail_resp.lamport_timestamp)
 
             if not avail_resp.available:
+                alternatives = []
+                for alt_id in ["Charger_01", "Charger_02", "Charger_03"]:
+                    if alt_id != charger_id:
+                        try:
+                            chk = stub.CheckChargerAvailability(
+                                evcharge_pb2.ChargerRequest(charger_id=alt_id, lamport_timestamp=clock.send()),
+                                timeout=0.4
+                            )
+                            if chk.available:
+                                alternatives.append(alt_id)
+                        except Exception:
+                            pass
+                if not alternatives:
+                    alternatives = [cid for cid, ch in local_chargers.items() if ch.get("available", True) and cid != charger_id]
+
+                rem_minutes = 15
+                est_time_str = time.strftime("%I:%M %p", time.localtime(time.time() + rem_minutes * 60))
+                t = clock.tick()
                 return jsonify({
                     "success": False,
-                    "message": f"{charger_id} is currently OCCUPIED.",
-                    "activity": [f"{ev_id} requested {charger_id}", "Availability check: OCCUPIED", "Reservation aborted"]
+                    "conflict": True,
+                    "occupied": True,
+                    "charger_id": charger_id,
+                    "occupied_by": "Active EV",
+                    "occupied_user": "EV-Driver",
+                    "estimated_free_time": est_time_str,
+                    "estimated_wait_minutes": rem_minutes,
+                    "alternatives": alternatives,
+                    "clock_tick": t,
+                    "message": f"{charger_id} is currently occupied. Estimated to get free at {est_time_str} (~{rem_minutes} mins). You may please wait or resolve conflict by assigning an alternative slot.",
+                    "suggestion": f"Alternative slot available: {alternatives[0]}" if alternatives else "All chargers busy. Queued in waitlist."
                 })
 
             ts2 = clock.send()
@@ -304,11 +334,34 @@ def reserve():
     with state_lock:
         c = local_chargers.get(charger_id)
         if not c or not c["available"]:
+            alternatives = [cid for cid, ch in local_chargers.items() if ch.get("available", True)]
+            start_t = c.get("start_time", time.time()) if c else time.time()
+            elapsed = int(time.time() - start_t)
+            rem_minutes = max(3, 15 - (elapsed // 60))
+            est_time_str = time.strftime("%I:%M %p", time.localtime(time.time() + rem_minutes * 60))
+            
+            t = clock.tick()
+            lamport_history.append({
+                "event": f"Conflict on {charger_id}: {car_model} [{ev_id}] requested occupied slot. Deferred in Ricart-Agrawala queue.",
+                "timestamp": t,
+                "type": "MUTEX_DEFERRED"
+            })
+            
             return jsonify({
                 "success": False,
-                "message": f"{charger_id} is currently OCCUPIED.",
-                "activity": [f"{ev_id} requested {charger_id}", "Status: OCCUPIED", "Reservation rejected"]
+                "conflict": True,
+                "occupied": True,
+                "charger_id": charger_id,
+                "occupied_by": c.get("car_model", "Vehicle") if c else "Vehicle",
+                "occupied_user": c.get("user", "Active EV") if c else "EV",
+                "estimated_free_time": est_time_str,
+                "estimated_wait_minutes": rem_minutes,
+                "alternatives": alternatives,
+                "clock_tick": t,
+                "message": f"{charger_id} is currently occupied by {c.get('car_model', 'EV') if c else 'Vehicle'} [{c.get('user', 'EV') if c else 'EV'}]. Estimated to get free at {est_time_str} (~{rem_minutes} mins). You may wait or auto-assign to an available charger.",
+                "suggestion": f"Alternative slot available: {alternatives[0]}" if alternatives else "All chargers busy. Queued in waitlist."
             })
+
         c["available"] = False
         c["status"] = "OCCUPIED"
         c["user"] = ev_id
@@ -337,6 +390,98 @@ def reserve():
         })
 
 
+@app.route("/api/resolve_conflict", methods=["POST"])
+def resolve_conflict_action():
+    """Smart Conflict Resolution: Auto-reassign to alternative charger or join Ricart-Agrawala queue."""
+    data = request.get_json(force=True) or {}
+    action = data.get("action", "reassign")  # 'reassign' or 'queue'
+    charger_id = data.get("charger_id", "Charger_01")
+    ev_id = data.get("ev_id", "EV-User")
+    car_model = data.get("car_model", "Electric Vehicle")
+    battery_level = int(data.get("battery_level", 28))
+    target_kwh = float(data.get("target_kwh", 45))
+
+    preferred_charger = data.get("preferred_charger")
+
+    with state_lock:
+        if action == "reassign":
+            available_chargers = [cid for cid, ch in local_chargers.items() if ch.get("available", True)]
+            target_charger = None
+            if preferred_charger and preferred_charger in available_chargers:
+                target_charger = preferred_charger
+            elif available_chargers:
+                target_charger = available_chargers[0]
+
+            if target_charger:
+                ch = local_chargers[target_charger]
+                ch["available"] = False
+                ch["status"] = "OCCUPIED"
+                ch["user"] = ev_id
+                ch["car_model"] = car_model
+                ch["battery_level"] = battery_level
+                ch["target_kwh"] = target_kwh
+                ch["charging_kw"] = 150 if target_charger == "Charger_01" else (22 if target_charger == "Charger_02" else 350)
+                ch["start_time"] = time.time()
+
+                if is_port_listening("127.0.0.1", 50051):
+                    try:
+                        stub = get_charging_stub()
+                        stub.ReserveCharger(
+                            evcharge_pb2.ReservationRequest(charger_id=target_charger, ev_id=ev_id, lamport_timestamp=clock.send()),
+                            timeout=0.6
+                        )
+                    except Exception:
+                        pass
+
+                t = clock.tick()
+                lamport_history.append({
+                    "event": f"Conflict Resolved: Reassigned {ev_id} ({car_model}) from {charger_id} -> {target_charger}",
+                    "timestamp": t,
+                    "type": "REASSIGNED"
+                })
+                return jsonify({
+                    "success": True,
+                    "reassigned": True,
+                    "old_charger_id": charger_id,
+                    "new_charger_id": target_charger,
+                    "car_model": car_model,
+                    "ev_id": ev_id,
+                    "battery_level": battery_level,
+                    "message": f"Conflict resolved! Successfully reassigned {car_model} [{ev_id}] to available station {target_charger}.",
+                    "clock_tick": t
+                })
+            else:
+                action = "queue"  # Fallback to queue if all occupied
+
+        if action == "queue":
+            already = [q for q in ricart_deferred_queue if q["ev_id"] == ev_id and q["charger_id"] == charger_id]
+            if not already:
+                ricart_deferred_queue.append({
+                    "charger_id": charger_id,
+                    "ev_id": ev_id,
+                    "car_model": car_model,
+                    "battery_level": battery_level,
+                    "target_kwh": target_kwh,
+                    "time": time.time()
+                })
+
+            queue_pos = len([q for q in ricart_deferred_queue if q["charger_id"] == charger_id])
+            t = clock.tick()
+            lamport_history.append({
+                "event": f"Ricart-Agrawala Queued: {car_model} [{ev_id}] queued for {charger_id} (Position #{queue_pos})",
+                "timestamp": t,
+                "type": "MUTEX_DEFERRED"
+            })
+            return jsonify({
+                "success": True,
+                "queued": True,
+                "queue_position": queue_pos,
+                "charger_id": charger_id,
+                "message": f"You are #{queue_pos} in the waiting queue for {charger_id}. You will be automatically assigned as soon as the current driver unplugs!",
+                "clock_tick": t
+            })
+
+
 @app.route("/update_status", methods=["POST"])
 def update_status():
     data = request.get_json(force=True) or {}
@@ -358,11 +503,50 @@ def update_status():
 
     with state_lock:
         if charger_id in local_chargers:
-            local_chargers[charger_id]["available"] = (new_status == "AVAILABLE")
-            local_chargers[charger_id]["status"] = new_status
             if new_status == "AVAILABLE":
+                # Check Ricart-Agrawala deferred wait queue for cars waiting on this charger
+                matching_waiters = [q for q in ricart_deferred_queue if q["charger_id"] == charger_id]
+                if matching_waiters:
+                    next_car = matching_waiters[0]
+                    ricart_deferred_queue.remove(next_car)
+
+                    # Auto-assign to waiting car!
+                    c = local_chargers[charger_id]
+                    c["available"] = False
+                    c["status"] = "OCCUPIED"
+                    c["user"] = next_car["ev_id"]
+                    c["car_model"] = next_car["car_model"]
+                    c["battery_level"] = next_car["battery_level"]
+                    c["target_kwh"] = next_car["target_kwh"]
+                    c["charging_kw"] = 150 if charger_id == "Charger_01" else (22 if charger_id == "Charger_02" else 350)
+                    c["start_time"] = time.time()
+
+                    t = clock.tick()
+                    lamport_history.append({
+                        "event": f"Ricart-Agrawala Lock Granted: {charger_id} automatically allocated to queued car {next_car['car_model']} [{next_car['ev_id']}]!",
+                        "timestamp": t,
+                        "type": "MUTEX_FLUSHED"
+                    })
+                    return jsonify({
+                        "success": True,
+                        "auto_assigned": True,
+                        "allocated_to": next_car["ev_id"],
+                        "car_model": next_car["car_model"],
+                        "message": f"{charger_id} was released and automatically allocated to waiting vehicle {next_car['car_model']} [{next_car['ev_id']}]!",
+                        "clock_tick": t
+                    })
+
+                local_chargers[charger_id]["available"] = True
+                local_chargers[charger_id]["status"] = "AVAILABLE"
                 local_chargers[charger_id]["user"] = None
-            return jsonify({"success": True, "message": f"{charger_id} set to {new_status}"})
+                local_chargers[charger_id]["car_model"] = None
+                local_chargers[charger_id]["battery_level"] = None
+                return jsonify({"success": True, "message": f"{charger_id} is now available."})
+            else:
+                local_chargers[charger_id]["available"] = False
+                local_chargers[charger_id]["status"] = new_status
+                return jsonify({"success": True, "message": f"{charger_id} set to {new_status}"})
+
         return jsonify({"success": False, "message": "Charger not found."}), 404
 
 
@@ -627,10 +811,29 @@ def resolve_deadlock():
         deadlock_state["cycle_detected"] = False
         deadlock_state["cycle_path"] = []
 
+        # Auto-reallocate any waiting vehicles in ricart_deferred_queue to free chargers
+        reallocated = []
+        alternatives = [cid for cid, ch in local_chargers.items() if ch.get("available", True)]
+        while ricart_deferred_queue and alternatives:
+            waiter = ricart_deferred_queue.pop(0)
+            target = alternatives.pop(0)
+            ch = local_chargers[target]
+            ch["available"] = False
+            ch["status"] = "OCCUPIED"
+            ch["user"] = waiter["ev_id"]
+            ch["car_model"] = waiter["car_model"]
+            ch["battery_level"] = waiter["battery_level"]
+            ch["target_kwh"] = waiter["target_kwh"]
+            ch["charging_kw"] = 150 if target == "Charger_01" else (22 if target == "Charger_02" else 350)
+            ch["start_time"] = time.time()
+            reallocated.append(f"{waiter['car_model']} [{waiter['ev_id']}] -> {target}")
+
+        realloc_msg = f" Reallocated waiting vehicle(s): {', '.join(reallocated)}" if reallocated else ""
         return jsonify({
             "success": True,
             "victim": "Worker_2",
-            "message": "Deadlock resolved! Worker 2 aborted as victim. Resources granted to Worker 1."
+            "reallocated": reallocated,
+            "message": f"Conflict resolved! Worker 2 aborted as victim and grid locks released.{realloc_msg}"
         })
 
 

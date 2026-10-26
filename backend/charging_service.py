@@ -39,7 +39,7 @@ from lamport_clock import LamportClock
 # ------------------------------------------------------------------------------
 CHARGERS = {
     "Charger_01": {"status": "AVAILABLE", "ev_id": None},
-    "Charger_02": {"status": "OCCUPIED",  "ev_id": "EV099"},
+    "Charger_02": {"status": "AVAILABLE", "ev_id": None},
     "Charger_03": {"status": "AVAILABLE", "ev_id": None},
 }
 _lock = threading.Lock()   # protect shared CHARGERS dict
